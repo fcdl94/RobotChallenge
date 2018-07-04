@@ -2,9 +2,11 @@ import torch
 import torch.optim as optim
 import torch.nn as nn
 import torch.utils.data
+import torchvision
 from torchvision import transforms, datasets
 from datetime import datetime
 import numpy as np
+import matplotlib.pyplot as plt
 
 import visdom
 
@@ -14,7 +16,7 @@ BATCH_SIZE = 32
 TEST_BATCH_SIZE = 64
 EPOCHS = 60
 STEP = 40
-NO_CUDA = True
+NO_CUDA = False
 IMAGE_CROP = 224
 LOG_INTERVAL = 10
 WORKERS = 8
@@ -30,7 +32,7 @@ vis = visdom.Visdom()
 cuda = not NO_CUDA and torch.cuda.is_available()
 
 
-def train(model, prefix, freeze=False, lr=0.001, momentum=0.9, epochs=EPOCHS, visdom_env="robotROD"):
+def train(model, prefix, freeze=False, lr=0.001, momentum=0.9, epochs=EPOCHS, visdom_env="robotROD", decay=10e-5):
     # Define visualization environment
     vis.env = visdom_env
 
@@ -40,6 +42,10 @@ def train(model, prefix, freeze=False, lr=0.001, momentum=0.9, epochs=EPOCHS, vi
 
     dataset = datasets.ImageFolder(root=PATH_TO_DATASETS  + '/train', transform=data_transform)
     train_loader = torch.utils.data.DataLoader(dataset, batch_size=BATCH_SIZE, shuffle=True, num_workers=workers)
+
+    # Uncomment the code behind to test the data loader
+    # print_loaded_data(train_loader)
+    # plt.pause(2)
 
     # Build the test loader
     # (note that more complex data transforms can be used to provide better performances e.g. 10 crops)
@@ -57,7 +63,7 @@ def train(model, prefix, freeze=False, lr=0.001, momentum=0.9, epochs=EPOCHS, vi
     params_to_optim = list(filter(lambda p: p.requires_grad, model.parameters()))
 
     # set optimizer and scheduler
-    optimizer = optim.SGD(params_to_optim, lr=lr, momentum=momentum, weight_decay=0)
+    optimizer = optim.SGD(params_to_optim, lr=lr, momentum=momentum, weight_decay=decay)
     scheduler = optim.lr_scheduler.StepLR(optimizer, STEP)
 
     # set loss function
@@ -259,7 +265,8 @@ def get_data_transform(mirror, scaling):
     else:
         if scaling:
             data_transform = transforms.Compose([
-                transforms.RandomResizedCrop(IMAGE_CROP),
+                # transforms.Resize((IMAGE_CROP, IMAGE_CROP)),
+                transforms.RandomResizedCrop(IMAGE_CROP, scale=(0.8, 1.0)),
                 transforms.ToTensor(),
                 transforms.Normalize(mean=IMAGENET_MEAN, std=IMAGENET_STD)
             ])
@@ -270,3 +277,25 @@ def get_data_transform(mirror, scaling):
                 transforms.Normalize(mean=IMAGENET_MEAN, std=IMAGENET_STD)
             ])
     return data_transform
+
+
+def print_loaded_data(dataloader):
+    def imshow(inp, title=None):
+        """Imshow for Tensor."""
+        inp = inp.numpy().transpose((1, 2, 0))
+        mean = np.array(IMAGENET_MEAN)
+        std = np.array(IMAGENET_STD)
+        inp = std * inp + mean
+        inp = np.clip(inp, 0, 1)
+        plt.imshow(inp)
+        if title is not None:
+            plt.title(title)
+        plt.pause(0.001)  # pause a bit so that plots are updated
+
+    # Get a batch of training data
+    inputs, classes = next(iter(dataloader))
+
+    # Make a grid from batch
+    out = torchvision.utils.make_grid(inputs)
+
+    imshow(out, title=[x for x in classes])

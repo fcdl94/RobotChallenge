@@ -3,30 +3,32 @@ import argparse
 from shutil import copyfile
 
 if __name__ == '__main__':
-    parser = argparse.ArgumentParser(description='Script to transform ROD into Image Folder')
-    parser.add_argument('--path', type=str, default="/home/lab2atpolito/FabioDatiSSD/ROD",
+    parser = argparse.ArgumentParser(description='Script to transform ARID into Image Folder')
+    parser.add_argument('--path', type=str, default="/home/lab2atpolito/Fabio/RobotData/ARID",
                         help="The input folder")
+    parser.add_argument('--index', type=int, default=1,
+                        help="The instance to be considered for test")
 
     args = parser.parse_args()
     path = args.path
-
-    ids_file = open(path+"/testinstance_ids.txt", "r")
-    map_ids = []
-    for line in ids_file:
-        map_ids.append(line.strip())
-        print(line.strip())
+    if args.index and 0 > args.index <= 3:
+        test_index = args.index
+    else:
+        test_index = 1
 
     i = 0
+    test_index -= 1
+
     for classname in os.listdir(path):
-        if not "testinstance_ids.txt" == classname and not "train" == classname and not "val" == classname:
+        if not "train" == classname and not "val" == classname:
             i += 1
             print(str(i) + " " + classname)
 
             src_dir = path+"/"+classname
             str_i = '%0*d' % (2, i)
 
-            for instdir in os.listdir(src_dir):
-                if str(instdir) in map_ids:
+            for j, instdir in enumerate(os.listdir(src_dir)):
+                if j == test_index:
                     dest = path+"/val/"+str_i
                 else:
                     dest = path+"/train/"+str_i
