@@ -6,6 +6,8 @@ import torch.nn as nn
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Masked model for VDA challenge')
+    parser.add_argument('--folder', type=str, default='/home/lab2atpolito/FabioDatiSSD/ROD',
+                        help='Where to locate the imgs')
     parser.add_argument('--pretrained', type=str, default=None,
                         help='Whether to use a pretrained model.')
     parser.add_argument('--prefix', type=str, default='./models',
@@ -34,7 +36,7 @@ if __name__ == '__main__':
     accuracy = 0
     if not args.test:
         # (model, prefix, freeze=False, lr=0.001, momentum=0.9, epochs=EPOCHS, visdom_env="robotROD"):
-        accuracy = training.train(model, args.prefix, freeze=args.frozen, step=args.step,
+        accuracy = training.train(model, args.folder, args.prefix, freeze=args.frozen, step=args.step,
                                   epochs=args.epochs, visdom_env=args.visdom, lr=args.lr, decay=args.decay)
     else:
         accuracy = training.test(model)

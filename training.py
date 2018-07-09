@@ -32,7 +32,7 @@ vis = visdom.Visdom()
 cuda = not NO_CUDA and torch.cuda.is_available()
 
 
-def train(model, prefix, freeze=False, lr=0.001, momentum=0.9, epochs=EPOCHS, visdom_env="robotROD", decay=10e-5, step=STEP):
+def train(model, folder, prefix, freeze=False, lr=0.001, momentum=0.9, epochs=EPOCHS, visdom_env="robotROD", decay=10e-5, step=STEP):
     # Define visualization environment
     vis.env = visdom_env
 
@@ -40,7 +40,7 @@ def train(model, prefix, freeze=False, lr=0.001, momentum=0.9, epochs=EPOCHS, vi
     workers = WORKERS if cuda else 0
     data_transform = get_data_transform(False, True)
 
-    dataset = datasets.ImageFolder(root=PATH_TO_DATASETS  + '/train', transform=data_transform)
+    dataset = datasets.ImageFolder(root=folder + '/train', transform=data_transform)
     train_loader = torch.utils.data.DataLoader(dataset, batch_size=BATCH_SIZE, shuffle=True, num_workers=workers)
 
     # Uncomment the code behind to test the data loader
@@ -51,7 +51,7 @@ def train(model, prefix, freeze=False, lr=0.001, momentum=0.9, epochs=EPOCHS, vi
     # (note that more complex data transforms can be used to provide better performances e.g. 10 crops)
     data_transform = get_data_transform(False, True)
 
-    dataset = datasets.ImageFolder(root=PATH_TO_DATASETS + '/val', transform=data_transform)
+    dataset = datasets.ImageFolder(root=folder + '/val', transform=data_transform)
     test_loader = torch.utils.data.DataLoader(dataset, batch_size=BATCH_SIZE, shuffle=True, num_workers=workers)
 
     # If feature extractor free all the network except fc
