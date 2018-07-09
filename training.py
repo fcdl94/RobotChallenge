@@ -32,7 +32,7 @@ vis = visdom.Visdom()
 cuda = not NO_CUDA and torch.cuda.is_available()
 
 
-def train(model, prefix, freeze=False, lr=0.001, momentum=0.9, epochs=EPOCHS, visdom_env="robotROD", decay=10e-5):
+def train(model, prefix, freeze=False, lr=0.001, momentum=0.9, epochs=EPOCHS, visdom_env="robotROD", decay=10e-5, step=STEP):
     # Define visualization environment
     vis.env = visdom_env
 
@@ -64,7 +64,7 @@ def train(model, prefix, freeze=False, lr=0.001, momentum=0.9, epochs=EPOCHS, vi
 
     # set optimizer and scheduler
     optimizer = optim.SGD(params_to_optim, lr=lr, momentum=momentum, weight_decay=decay)
-    scheduler = optim.lr_scheduler.StepLR(optimizer, STEP)
+    scheduler = optim.lr_scheduler.StepLR(optimizer, step)
 
     # set loss function
     cost_function = nn.CrossEntropyLoss()
