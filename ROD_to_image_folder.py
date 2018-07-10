@@ -4,13 +4,15 @@ from shutil import copyfile
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Script to transform ROD into Image Folder')
-    parser.add_argument('--path', type=str, default="/home/lab2atpolito/FabioDatiSSD/ROD",
+    parser.add_argument('--path', type=str, default="/home/fabio/robot_challenge/rod",
                         help="The input folder")
+    parser.add_argument('--index', type=int, default=1,
+                        help="The input split to be made")
 
     args = parser.parse_args()
     path = args.path
 
-    ids_file = open(path+"/testinstance_ids.txt", "r")
+    ids_file = open("rod_split" + str(args.index), "r")
     map_ids = []
     for line in ids_file:
         map_ids.append(line.strip())
