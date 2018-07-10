@@ -18,20 +18,24 @@ if __name__ == '__main__':
         map_ids.append(line.strip())
         print(line.strip())
 
-    i = 0
-    for classname in os.listdir(path):
-        if not "testinstance_ids.txt" == classname and not "train" == classname and not "val" == classname:
-            i += 1
-            print(str(i) + " " + classname)
+    source_path = path + "/original"
+    dest_path = path + "/split" + str(args.index)
+    if not os.path.exists(dest_path):
+        os.mkdir(dest_path)
+        os.mkdir(dest_path + "/val")
+        os.mkdir(dest_path + "/train")
 
-            src_dir = path+"/"+classname
-            str_i = '%0*d' % (2, i)
+    for classname in os.listdir(source_path):
+        if not "testinstance_ids.txt" == classname and not "train" == classname and not "val" == classname:
+            print(classname)
+
+            src_dir = source_path+"/"+classname
 
             for instdir in os.listdir(src_dir):
                 if str(instdir) in map_ids:
-                    dest = path+"/val/"+str_i
+                    dest = dest_path+"/val/"+classname
                 else:
-                    dest = path+"/train/"+str_i
+                    dest = dest_path+"/train/"+classname
 
                 src = src_dir + "/" + instdir
                 print("\t " + src)
