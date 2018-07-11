@@ -85,7 +85,7 @@ def train(model, folder, prefix, freeze=False, lr=0.001, momentum=0.9, epochs=EP
     val_epoch_min = -1
     for epoch in range(1, epochs + 1):
         dict = optimizer.state_dict()
-        print(str(epoch) + "-lr: " + dict["param_groups"][0]["lr"])
+        print(str(epoch) + "-lr: " + str(dict["param_groups"][0]["lr"]))
 
         scheduler.step()
         loss_epoch = train_epoch(model, epoch, train_loader, optimizer, cost_function, not freeze)
