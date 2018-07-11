@@ -82,15 +82,13 @@ def train(model, folder, prefix, freeze=False, lr=0.001, momentum=0.9, epochs=EP
 
     # perform training epochs time
     best_accuracy = -1
-    loss_epoch_min = -1
+    val_epoch_min = -1
     for epoch in range(1, epochs + 1):
         dict = optimizer.state_dict()
-        print(dict)
+        print(str(epoch) + "-lr: " + dict["param_groups"][0]["lr"])
 
         scheduler.step()
         loss_epoch = train_epoch(model, epoch, train_loader, optimizer, cost_function, not freeze)
-        if loss_epoch_min == -1:
-            loss_epoch_min = loss_epoch
         result = test_epoch(model, test_loader, cost_function)
 
         accuracies_test.append(result[0])
@@ -134,13 +132,13 @@ def train(model, folder, prefix, freeze=False, lr=0.001, momentum=0.9, epochs=EP
             best_accuracy = result[0]
 
         # Save the model
-        if loss_epoch <= loss_epoch_min:
-            loss_epoch_min = loss_epoch
+        if result[1] <= val_epoch_min or val_epoch_min == -1:
+            val_epoch_min = loss_epoch
             torch.save({
                 'epoch': epoch,
                 'state_dict': model.state_dict(),
                 'optimizer': optimizer.state_dict()
-            }, prefix + "_checkpoint.pth")
+            }, prefix + ".pth")
 
     return best_accuracy
 
