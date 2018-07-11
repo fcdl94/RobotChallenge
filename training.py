@@ -32,7 +32,8 @@ vis = visdom.Visdom()
 cuda = not NO_CUDA and torch.cuda.is_available()
 
 
-def train(model, folder, prefix, freeze=False, lr=0.001, momentum=0.9, epochs=EPOCHS, visdom_env="robotROD", decay=10e-5, step=STEP, batch=BATCH_SIZE):
+def train(model, folder, prefix, freeze=False, lr=0.001, momentum=0.9, epochs=EPOCHS, visdom_env="robotROD",
+          decay=10e-5, step=STEP, batch=BATCH_SIZE):
     # Define visualization environment
     vis.env = visdom_env
 
@@ -83,6 +84,9 @@ def train(model, folder, prefix, freeze=False, lr=0.001, momentum=0.9, epochs=EP
     best_accuracy = -1
     loss_epoch_min = -1
     for epoch in range(1, epochs + 1):
+        dict = optimizer.state_dict()
+        print(dict)
+
         scheduler.step()
         loss_epoch = train_epoch(model, epoch, train_loader, optimizer, cost_function, not freeze)
         if loss_epoch_min == -1:
