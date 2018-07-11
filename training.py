@@ -23,7 +23,8 @@ WORKERS = 8
 
 # image normalization
 IMAGENET_MEAN = [0.485, 0.456, 0.406]
-IMAGENET_STD = [0.229, 0.224, 0.225]
+#IMAGENET_STD = [0.229, 0.224, 0.225]
+IMAGENET_STD = [1,1,1]
 
 # Initialize visualization tool
 vis = visdom.Visdom()
@@ -39,7 +40,7 @@ def train(model, folder, prefix, freeze=False, lr=0.001, momentum=0.9, epochs=EP
 
     # data pre-processing
     workers = WORKERS if cuda else 0
-    data_transform = get_data_transform(False, True)
+    data_transform = get_data_transform(True, False)
 
     dataset = datasets.ImageFolder(root=folder + '/train', transform=data_transform)
     train_loader = torch.utils.data.DataLoader(dataset, batch_size=batch, shuffle=True, num_workers=workers)
@@ -50,7 +51,7 @@ def train(model, folder, prefix, freeze=False, lr=0.001, momentum=0.9, epochs=EP
 
     # Build the test loader
     # (note that more complex data transforms can be used to provide better performances e.g. 10 crops)
-    data_transform = get_data_transform(False, True)
+    data_transform = get_data_transform(False, False)
 
     dataset = datasets.ImageFolder(root=folder + '/val', transform=data_transform)
     test_loader = torch.utils.data.DataLoader(dataset, batch_size=TEST_BATCH_SIZE, shuffle=True, num_workers=workers)
@@ -84,10 +85,10 @@ def train(model, folder, prefix, freeze=False, lr=0.001, momentum=0.9, epochs=EP
     best_accuracy = -1
     val_epoch_min = -1
     for epoch in range(1, epochs + 1):
-        dict = optimizer.state_dict()
-        print(str(epoch) + "-lr: " + str(dict["param_groups"][0]["lr"]))
 
         scheduler.step()
+        print(str(epoch) + "-lr: " + str(optimizer.state_dict()["param_groups"][0]["lr"]))
+
         loss_epoch = train_epoch(model, epoch, train_loader, optimizer, cost_function, not freeze)
         result = test_epoch(model, test_loader, cost_function)
 
@@ -252,14 +253,14 @@ def get_data_transform(mirror, scaling):
     if mirror:
         if scaling:
             data_transform = transforms.Compose([
-                transforms.RandomResizedCrop(IMAGE_CROP),
+                transforms.RandomResizedCrop(IMAGE_CROP, scale=(0.8, 1.0)),
                 transforms.RandomHorizontalFlip(),
                 transforms.ToTensor(),
                 transforms.Normalize(mean=IMAGENET_MEAN, std=IMAGENET_STD)
             ])
         else:
             data_transform = transforms.Compose([
-                transforms.RandomCrop(IMAGE_CROP),
+                transforms.Resize(IMAGE_CROP, IMAGE_CROP),
                 transforms.RandomHorizontalFlip(),
                 transforms.ToTensor(),
                 transforms.Normalize(mean=IMAGENET_MEAN, std=IMAGENET_STD)
@@ -267,14 +268,14 @@ def get_data_transform(mirror, scaling):
     else:
         if scaling:
             data_transform = transforms.Compose([
-                # transforms.Resize((IMAGE_CROP, IMAGE_CROP)),
+                #transforms.Resize((IMAGE_CROP, IMAGE_CROP)),
                 transforms.RandomResizedCrop(IMAGE_CROP, scale=(0.8, 1.0)),
                 transforms.ToTensor(),
                 transforms.Normalize(mean=IMAGENET_MEAN, std=IMAGENET_STD)
             ])
         else:
             data_transform = transforms.Compose([
-                transforms.RandomCrop(IMAGE_CROP),
+                transforms.Resize(IMAGE_CROP, IMAGE_CROP),
                 transforms.ToTensor(),
                 transforms.Normalize(mean=IMAGENET_MEAN, std=IMAGENET_STD)
             ])
