@@ -23,7 +23,8 @@ WORKERS = 8
 
 # image normalization
 IMAGENET_MEAN = [0.485, 0.456, 0.406]
-IMAGENET_STD = [0.229, 0.224, 0.225]
+#IMAGENET_STD = [0.229, 0.224, 0.225]
+IMAGENET_STD = [1,1,1]
 
 # Initialize visualization tool
 vis = visdom.Visdom()
@@ -32,13 +33,14 @@ vis = visdom.Visdom()
 cuda = not NO_CUDA and torch.cuda.is_available()
 
 
-def train(model, folder, prefix, freeze=False, lr=0.001, momentum=0.9, epochs=EPOCHS, visdom_env="robotROD", decay=10e-5, step=STEP, batch=BATCH_SIZE):
+def train(model, folder, prefix, freeze=False, lr=0.001, momentum=0.9, epochs=EPOCHS, visdom_env="robotROD",
+          decay=10e-5, step=STEP, batch=BATCH_SIZE):
     # Define visualization environment
     vis.env = visdom_env
 
     # data pre-processing
     workers = WORKERS if cuda else 0
-    data_transform = get_data_transform(False, True)
+    data_transform = get_data_transform(True, False)
 
     dataset = datasets.ImageFolder(root=folder + '/train', transform=data_transform)
     train_loader = torch.utils.data.DataLoader(dataset, batch_size=batch, shuffle=True, num_workers=workers)
@@ -49,7 +51,7 @@ def train(model, folder, prefix, freeze=False, lr=0.001, momentum=0.9, epochs=EP
 
     # Build the test loader
     # (note that more complex data transforms can be used to provide better performances e.g. 10 crops)
-    data_transform = get_data_transform(False, True)
+    data_transform = get_data_transform(False, False)
 
     dataset = datasets.ImageFolder(root=folder + '/val', transform=data_transform)
     test_loader = torch.utils.data.DataLoader(dataset, batch_size=TEST_BATCH_SIZE, shuffle=True, num_workers=workers)
@@ -81,12 +83,13 @@ def train(model, folder, prefix, freeze=False, lr=0.001, momentum=0.9, epochs=EP
 
     # perform training epochs time
     best_accuracy = -1
-    loss_epoch_min = -1
+    val_epoch_min = -1
     for epoch in range(1, epochs + 1):
+
         scheduler.step()
+        print(str(epoch) + "-lr: " + str(optimizer.state_dict()["param_groups"][0]["lr"]))
+
         loss_epoch = train_epoch(model, epoch, train_loader, optimizer, cost_function, not freeze)
-        if loss_epoch_min == -1:
-            loss_epoch_min = loss_epoch
         result = test_epoch(model, test_loader, cost_function)
 
         accuracies_test.append(result[0])
@@ -130,13 +133,13 @@ def train(model, folder, prefix, freeze=False, lr=0.001, momentum=0.9, epochs=EP
             best_accuracy = result[0]
 
         # Save the model
-        if loss_epoch <= loss_epoch_min:
-            loss_epoch_min = loss_epoch
+        if result[1] <= val_epoch_min or val_epoch_min == -1:
+            val_epoch_min = loss_epoch
             torch.save({
                 'epoch': epoch,
                 'state_dict': model.state_dict(),
                 'optimizer': optimizer.state_dict()
-            }, prefix + "_checkpoint.pth")
+            }, prefix + ".pth")
 
     return best_accuracy
 
@@ -265,14 +268,14 @@ def get_data_transform(mirror, scaling):
     else:
         if scaling:
             data_transform = transforms.Compose([
-                # transforms.Resize((IMAGE_CROP, IMAGE_CROP)),
+                #transforms.Resize((IMAGE_CROP, IMAGE_CROP)),
                 transforms.RandomResizedCrop(IMAGE_CROP, scale=(0.8, 1.0)),
                 transforms.ToTensor(),
                 transforms.Normalize(mean=IMAGENET_MEAN, std=IMAGENET_STD)
             ])
         else:
             data_transform = transforms.Compose([
-                transforms.RandomCrop(IMAGE_CROP),
+                transforms.Resize(IMAGE_CROP, IMAGE_CROP),
                 transforms.ToTensor(),
                 transforms.Normalize(mean=IMAGENET_MEAN, std=IMAGENET_STD)
             ])
