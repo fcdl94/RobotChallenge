@@ -260,7 +260,7 @@ def get_data_transform(mirror, scaling):
             ])
         else:
             data_transform = transforms.Compose([
-                transforms.Resize(IMAGE_CROP, IMAGE_CROP),
+                transforms.Resize((IMAGE_CROP, IMAGE_CROP)),
                 transforms.RandomHorizontalFlip(),
                 transforms.ToTensor(),
                 transforms.Normalize(mean=IMAGENET_MEAN, std=IMAGENET_STD)
@@ -275,7 +275,7 @@ def get_data_transform(mirror, scaling):
             ])
         else:
             data_transform = transforms.Compose([
-                transforms.Resize(IMAGE_CROP, IMAGE_CROP),
+                transforms.Resize((IMAGE_CROP, IMAGE_CROP)),
                 transforms.ToTensor(),
                 transforms.Normalize(mean=IMAGENET_MEAN, std=IMAGENET_STD)
             ])
