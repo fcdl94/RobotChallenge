@@ -250,14 +250,14 @@ def get_data_transform(mirror, scaling):
     if mirror:
         if scaling:
             data_transform = transforms.Compose([
-                transforms.RandomResizedCrop(IMAGE_CROP),
+                transforms.RandomResizedCrop(IMAGE_CROP, scale=(0.8, 1.0)),
                 transforms.RandomHorizontalFlip(),
                 transforms.ToTensor(),
                 transforms.Normalize(mean=IMAGENET_MEAN, std=IMAGENET_STD)
             ])
         else:
             data_transform = transforms.Compose([
-                transforms.RandomCrop(IMAGE_CROP),
+                transforms.Resize(IMAGE_CROP, IMAGE_CROP),
                 transforms.RandomHorizontalFlip(),
                 transforms.ToTensor(),
                 transforms.Normalize(mean=IMAGENET_MEAN, std=IMAGENET_STD)
