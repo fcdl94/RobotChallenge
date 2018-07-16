@@ -4,7 +4,7 @@ from shutil import copyfile
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Script to transform ARID into Image Folder')
-    parser.add_argument('--path', type=str, default="/home/lab2atpolito/Fabio/RobotData/ARID",
+    parser.add_argument('--path', type=str, default="/home/fabio/robot_challenge/arid",
                         help="The input folder")
     parser.add_argument('--index', type=int, default=1,
                         help="The instance to be considered for test")
