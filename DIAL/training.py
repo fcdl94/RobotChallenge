@@ -186,9 +186,10 @@ def train_epoch(model, epoch, data_loader, optimizers, bn=False):
     # Init holders
     losses = 0
     current = 0
-
+    batch_idx = 1
+    
     # Perform the training procedure
-    for batch_idx, s_data, t_data in enumerate(data_loader):
+    for s_data, t_data in data_loader:
     
         (source_data, source_target) = s_data
         (target_data, target_target) = t_data
@@ -240,6 +241,7 @@ def train_epoch(model, epoch, data_loader, optimizers, bn=False):
 
         losses += loss.item()
         current += 1
+        batch_idx += 1
 
     return losses / current
 

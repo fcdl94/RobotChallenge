@@ -3,13 +3,11 @@ import torch
 
 class DoubleDataset(torch.utils.data.Dataset):
     
-    def __init__(self, dataset1, dataset2, transforms=None):
+    def __init__(self, dataset1, dataset2):
         self.dataset1 = dataset1
         self.dataset2 = dataset2
-        self.transform = transforms
     
     def __getitem__(self, index):
-        
         return self.dataset1[index], self.dataset2[index]
     
     def dataset_len(self, dataset=1):
