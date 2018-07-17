@@ -27,6 +27,8 @@ if __name__ == '__main__':
                         help='How many epochs to use for training')
     parser.add_argument('--visdom', type=str, default="DIAL-PYTORCH_ROD-ARID",
                         help='Select the visdom environment.')
+    parser.add_argument('--test', type=int, default=0,
+                        help='Whether it is only to test or also to train.')
 
     args = parser.parse_args()
 
