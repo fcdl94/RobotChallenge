@@ -7,7 +7,8 @@ import torch.utils.model_zoo as model_zoo
 #   Controllare non sia una follia, ma penso di no.
 
 model_urls = {
-    'resnet18': 'https://download.pytorch.org/models/resnet18-5c106cde.pth'
+    'resnet18': 'https://download.pytorch.org/models/resnet18-5c106cde.pth',
+    'RODS1': '/home/fabio/robot_challenge/RobotChallenge/RODx_models/S1LR23BS64t1.pth'
 }
 
 
@@ -163,12 +164,13 @@ class ResNet(nn.Module):
                 dict_model[key].data.copy_(state_dict[key].data)
 
 
-def resnet18(pretrained=True, **kwargs):
+def resnet18(fc_classes=1000, pretrained=None):
     """Constructs a ResNet-18 model.
     Args:
+        fc_classes (int): The number of classes the model has to output. E.g. ImageNet12 has 1000 classes
         pretrained (bool): If True, returns a model pre-trained on ImageNet
     """
-    model = ResNet(BasicBlock, [2, 2, 2, 2], **kwargs)
+    model = ResNet(BasicBlock, [2, 2, 2, 2], num_classes=fc_classes,)
     if pretrained:
-        model.load_pretrained(model_zoo.load_url(model_urls['resnet18']))
+        model.load_pretrained(model_zoo.load_url(model_urls[pretrained]))
     return model

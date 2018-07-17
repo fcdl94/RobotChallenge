@@ -32,16 +32,14 @@ if __name__ == '__main__':
 
     args = parser.parse_args()
 
-    model = DIAL.networks.resnet18(True)
-    # adapt to ROD/ARID
-    num_ftrs = model.fc.in_features
-    model.fc = nn.Linear(num_ftrs, 51)
+    model = DIAL.networks.resnet18(51, "ROD")
 
     accuracy = 0
     if not args.test:
         # (model, prefix, freeze=False, lr=0.001, momentum=0.9, epochs=EPOCHS, visdom_env="robotROD"):
-        accuracy = DIAL.training.train(model, args.source, args.target, freeze=args.frozen, step=args.step, batch=args.bs,
-                                  epochs=args.epochs, visdom_env=args.visdom, lr=args.lr, decay=args.decay)
+        accuracy = DIAL.training.train(model, args.source, args.target, freeze=args.frozen, step=args.step,
+                                       batch=args.bs, epochs=args.epochs, visdom_env=args.visdom, lr=args.lr,
+                                       decay=args.decay)
     else:
         accuracy = DIAL.training.test(model)
 
