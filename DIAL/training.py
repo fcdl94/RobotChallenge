@@ -34,7 +34,7 @@ vis = visdom.Visdom()
 cuda = not NO_CUDA and torch.cuda.is_available()
 
 
-def train(model, folder, prefix, freeze=False, lr=0.001, momentum=0.9, epochs=EPOCHS, visdom_env="Auto_DIAL_PyTorch",
+def train(model, folder_source, folder_target, freeze=False, lr=0.001, momentum=0.9, epochs=EPOCHS, visdom_env="Auto_DIAL_PyTorch",
           decay=10e-5, step=STEP, batch=BATCH_SIZE):
     # Define visualization environment
     vis.env = visdom_env
@@ -44,25 +44,25 @@ def train(model, folder, prefix, freeze=False, lr=0.001, momentum=0.9, epochs=EP
     data_transform = get_data_transform(True, False)
 
     # source domain images
-    dataset = datasets.ImageFolder(root=folder + '/train', transform=data_transform)
+    dataset = datasets.ImageFolder(root=folder_source + '/train', transform=data_transform)
     source_train_loader = torch.utils.data.DataLoader(dataset, batch_size=batch, shuffle=True, num_workers=workers)
 
     # Build the test loader
     # (note that more complex data transforms can be used to provide better performances e.g. 10 crops)
     data_transform = get_data_transform(False, False)
 
-    dataset = datasets.ImageFolder(root=folder + '/val', transform=data_transform)
+    dataset = datasets.ImageFolder(root=folder_source + '/val', transform=data_transform)
     source_test_loader = torch.utils.data.DataLoader(dataset, batch_size=batch, shuffle=True, num_workers=workers)
 
     # target domain dataset - without labels - it must be used whole for test
     data_transform = get_data_transform(True, False)
 
-    dataset = datasets.ImageFolder(root=folder + '/train', transform=data_transform)
+    dataset = datasets.ImageFolder(root=folder_target + '/train', transform=data_transform)
     target_train_loader = torch.utils.data.DataLoader(dataset, batch_size=batch, shuffle=True, num_workers=workers)
 
     data_transform = get_data_transform(False, False)
 
-    dataset = datasets.ImageFolder(root=folder + '/val', transform=data_transform)
+    dataset = datasets.ImageFolder(root=folder_target + '/val', transform=data_transform)
     target_test_loader = torch.utils.data.DataLoader(dataset, batch_size=batch, shuffle=True, num_workers=workers)
 
     # If feature extractor free all the network except fc
