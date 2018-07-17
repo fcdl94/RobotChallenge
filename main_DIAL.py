@@ -11,7 +11,7 @@ if __name__ == '__main__':
                         help='Where to locate the source imgs')
     parser.add_argument('--target', type=str, default='/home/fabio/robot_challenge/arid',
                         help='Where to locate the target imgs')
-    parser.add_argument('--pretrained', type=str, default=None,
+    parser.add_argument('--pretrained', type=str, default="RODS1",
                         help='Whether to use a pretrained model.')
     parser.add_argument('--lr', type=float, default=1e-3,
                         help='The learning rate to apply into training')
@@ -32,7 +32,7 @@ if __name__ == '__main__':
 
     args = parser.parse_args()
 
-    model = DIAL.networks.resnet18(51, "ROD")
+    model = DIAL.networks.resnet18(51, args.pretrained)
 
     accuracy = 0
     if not args.test:
