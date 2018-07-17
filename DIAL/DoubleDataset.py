@@ -8,14 +8,17 @@ class DoubleDataset(torch.utils.data.Dataset):
         self.dataset2 = dataset2
     
     def __getitem__(self, index):
-        return self.dataset1[index], self.dataset2[index]
-    
-    def dataset_len(self, dataset=1):
-        if dataset == 1:
-            return len(self.dataset1)
+        if index >= len(self.dataset1):
+            data_1 = self.dataset1[index - len(self.dataset1)]
         else:
-            return len(self.dataset2)
-    
+            data_1 = self.dataset1[index]
+        if index >= len(self.dataset2):
+            data_2 = self.dataset2[index - len(self.dataset2)]
+        else:
+            data_2 = self.dataset2[index]
+        
+        return data_1, data_2
+
     def __len__(self):
-        return min(len(self.dataset1), len(self.dataset2))
+        return max(len(self.dataset1), len(self.dataset2))
 

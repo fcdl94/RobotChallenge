@@ -236,7 +236,7 @@ def train_epoch(model, epoch, data_loader, optimizers, bn=False):
         # Check for log and update holders
         if batch_idx % LOG_INTERVAL == 0:
             print('Train Epoch: {} [{:4d}/{:4d} ({:2.0f}%)]\tAvgLoss: {:.6f}'.format(
-                epoch, batch_idx * len(data), len(data_loader),
+                epoch, batch_idx * len(data), len(data_loader.dataset),
                        100. * batch_idx / len(data_loader), loss.item() / BATCH_SIZE))
 
         losses += loss.item()
