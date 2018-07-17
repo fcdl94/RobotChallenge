@@ -188,7 +188,10 @@ def train_epoch(model, epoch, data_loader, optimizers, bn=False):
     current = 0
 
     # Perform the training procedure
-    for batch_idx, (source_data, source_target), (target_data, _) in enumerate(data_loader):
+    for batch_idx, s_data, t_data in enumerate(data_loader):
+    
+        (source_data, source_target) = s_data
+        (target_data, target_target) = t_data
 
         # DO that for source
         # Move the variables to GPU
