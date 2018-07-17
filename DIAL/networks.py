@@ -103,6 +103,8 @@ class ResNet(nn.Module):
         self.bn1.set_domain(source)
         for layer in [self.layer1, self.layer2, self.layer3, self.layer4]:
             for block in layer.modules():
+                if isinstance(block, nn.Sequential):
+                    block[1].set_domain(source)
                 block.set_domain(source)
                 
             
