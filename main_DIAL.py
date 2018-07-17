@@ -9,7 +9,7 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Masked model for VDA challenge')
     parser.add_argument('--source', type=str, default='/home/fabio/robot_challenge/rod/split1',
                         help='Where to locate the source imgs')
-    parser.add_argument('--source', type=str, default='/home/fabio/robot_challenge/arid',
+    parser.add_argument('--target', type=str, default='/home/fabio/robot_challenge/arid',
                         help='Where to locate the target imgs')
     parser.add_argument('--pretrained', type=str, default=None,
                         help='Whether to use a pretrained model.')
