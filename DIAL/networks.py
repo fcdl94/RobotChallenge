@@ -1,6 +1,6 @@
 import torch.nn as nn
 import math
-import torch.utils.model_zoo as model_zoo
+import torch
 
 
 #TODO modificarlo in modo che non abbia da fare i set index ma direttamente modificando la funzione chiamabile tale che modifichi la forward.
@@ -172,5 +172,5 @@ def resnet18(fc_classes=1000, pretrained=None):
     """
     model = ResNet(BasicBlock, [2, 2, 2, 2], num_classes=fc_classes,)
     if pretrained:
-        model.load_pretrained(model_zoo.load_url(model_urls[pretrained]))
+        model.load_pretrained(torch.load(pretrained)['state_dict'])
     return model
