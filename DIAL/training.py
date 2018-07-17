@@ -253,9 +253,9 @@ def test_epoch(model, loader):
     t_correct = 0
     
     # Perform the evaluation procedure
-    for (s_data, s_target), (t_data, t_target) in loader:
-    
-        data, target = s_data, s_target
+    for s_data, t_data in loader:
+        
+        data, target = s_data
         if cuda:
             data, target = data.cuda(), target.cuda()
 
@@ -265,7 +265,7 @@ def test_epoch(model, loader):
         s_correct += pred.eq(target.data.view_as(pred)).cpu().sum()  # Check if the prediction is correct
 
         # Reset and compute for target distribution
-        data, target = t_data, t_target
+        data, target = t_data
         if cuda:
             data, target = data.cuda(), target.cuda()
     
