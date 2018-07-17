@@ -55,7 +55,8 @@ def train(model, folder_source, folder_target, freeze=False, lr=0.001, momentum=
 
     s_dataset = datasets.ImageFolder(root=folder_source + '/val', transform=data_transform)
     t_dataset = datasets.ImageFolder(root=folder_target + '/val', transform=data_transform)
-    test_loader = torch.utils.data.DataLoader(DoubleDataset(s_dataset, t_dataset), batch_size=batch, shuffle=True, num_workers=workers)
+    s_test_loader = torch.utils.data.DataLoader(s_dataset, batch_size=batch, shuffle=True, num_workers=workers)
+    d_test_loader = torch.utils.data.DataLoader(t_dataset, batch_size=batch, shuffle=True, num_workers=workers)
     
     # If feature extractor free all the network except fc
     if freeze:
@@ -88,7 +89,7 @@ def train(model, folder_source, folder_target, freeze=False, lr=0.001, momentum=
         print(str(epoch) + "-lr: " + str(optimizer.state_dict()["param_groups"][0]["lr"]))
 
         loss_epoch = train_epoch(model, epoch, train_loader, optimizer, not freeze)
-        result = test_epoch(model, test_loader)
+        result = test_epoch(model, epoch, s_test_loader, d_test_loader )
 
         accuracies_test.append(result[0])
         losses_test.append(result[1])
@@ -235,7 +236,7 @@ def train_epoch(model, epoch, data_loader, optimizers, bn=False):
 
         # Check for log and update holders
         if batch_idx % LOG_INTERVAL == 0:
-            print('Train Epoch: {} [{:4d}/{:4d} ({:2.0f}%)]\tAvgLoss: {:.6f}'.format(
+            print('Train Epoch: {} [{:6d}/{:6d} ({:2.0f}%)]\tAvgLoss: {:.6f}'.format(
                 epoch, batch_idx * len(data), len(data_loader.dataset),
                        100. * batch_idx / len(data_loader), loss.item() / BATCH_SIZE))
 
@@ -246,7 +247,7 @@ def train_epoch(model, epoch, data_loader, optimizers, bn=False):
     return losses / current
 
 
-def test_epoch(model, loader):
+def test_epoch(model, epoch, s_loader, t_loader):
     # Put the model in eval mode
     model.eval()
     torch.set_grad_enabled(False)
@@ -255,9 +256,8 @@ def test_epoch(model, loader):
     t_correct = 0
     
     # Perform the evaluation procedure
-    for s_data, t_data in loader:
+    for data, target in s_loader:
         
-        data, target = s_data
         if cuda:
             data, target = data.cuda(), target.cuda()
 
@@ -266,8 +266,9 @@ def test_epoch(model, loader):
         pred = torch.max(output, 1)[1]  # get the index of the max log-probability
         s_correct += pred.eq(target.data.view_as(pred)).cpu().sum()  # Check if the prediction is correct
 
+    # Perform the evaluation procedure
+    for data, target in t_loader:
         # Reset and compute for target distribution
-        data, target = t_data
         if cuda:
             data, target = data.cuda(), target.cuda()
     
@@ -276,8 +277,8 @@ def test_epoch(model, loader):
         pred = torch.max(output, 1)[1]  # get the index of the max log-probability
         t_correct += pred.eq(target.data.view_as(pred)).cpu().sum()  # Check if the prediction is correct
 
-    source_accuracy = 100. * float(s_correct) / (len(loader.dataset))
-    target_accuracy = 100. * float(t_correct) / (len(loader.dataset))
+    source_accuracy = 100. * float(s_correct) / (len(s_loader.dataset))
+    target_accuracy = 100. * float(t_correct) / (len(t_loader.dataset))
     
     results = [source_accuracy, target_accuracy]
 
