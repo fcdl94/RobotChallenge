@@ -105,7 +105,8 @@ class ResNet(nn.Module):
             for block in layer.modules():
                 if isinstance(block, nn.Sequential):
                     block[1].set_domain(source)
-                block.set_domain(source)
+                else:
+                    block.set_domain(source)
                 
             
     def _make_layer(self, block, planes, blocks, stride=1):
