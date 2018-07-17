@@ -7,6 +7,7 @@ from torchvision import transforms, datasets
 from datetime import datetime
 import numpy as np
 from DIAL.entropy_loss import EntropyLoss
+from DIAL.DoubleDataset import DoubleDataset
 import visdom
 import itertools
 
@@ -44,27 +45,18 @@ def train(model, folder_source, folder_target, freeze=False, lr=0.001, momentum=
     data_transform = get_data_transform(True, False)
 
     # source domain images
-    dataset = datasets.ImageFolder(root=folder_source + '/train', transform=data_transform)
-    source_train_loader = torch.utils.data.DataLoader(dataset, batch_size=batch, shuffle=True, num_workers=workers)
+    s_dataset = datasets.ImageFolder(root=folder_source + '/train', transform=data_transform)
+    t_dataset = datasets.ImageFolder(root=folder_target + '/train', transform=data_transform)
+    train_loader = torch.utils.data.DataLoader(DoubleDataset(s_dataset, t_dataset), batch_size=batch, shuffle=True, num_workers=workers)
 
     # Build the test loader
     # (note that more complex data transforms can be used to provide better performances e.g. 10 crops)
     data_transform = get_data_transform(False, False)
 
-    dataset = datasets.ImageFolder(root=folder_source + '/val', transform=data_transform)
-    source_test_loader = torch.utils.data.DataLoader(dataset, batch_size=batch, shuffle=True, num_workers=workers)
-
-    # target domain dataset - without labels - it must be used whole for test
-    data_transform = get_data_transform(True, False)
-
-    dataset = datasets.ImageFolder(root=folder_target + '/train', transform=data_transform)
-    target_train_loader = torch.utils.data.DataLoader(dataset, batch_size=batch, shuffle=True, num_workers=workers)
-
-    data_transform = get_data_transform(False, False)
-
-    dataset = datasets.ImageFolder(root=folder_target + '/val', transform=data_transform)
-    target_test_loader = torch.utils.data.DataLoader(dataset, batch_size=batch, shuffle=True, num_workers=workers)
-
+    s_dataset = datasets.ImageFolder(root=folder_source + '/val', transform=data_transform)
+    t_dataset = datasets.ImageFolder(root=folder_target + '/val', transform=data_transform)
+    test_loader = torch.utils.data.DataLoader(DoubleDataset(s_dataset, t_dataset), batch_size=batch, shuffle=True, num_workers=workers)
+    
     # If feature extractor free all the network except fc
     if freeze:
         for name, par in model.named_parameters():
@@ -95,8 +87,8 @@ def train(model, folder_source, folder_target, freeze=False, lr=0.001, momentum=
         scheduler.step()
         print(str(epoch) + "-lr: " + str(optimizer.state_dict()["param_groups"][0]["lr"]))
 
-        loss_epoch = train_epoch(model, epoch, source_train_loader, target_train_loader, optimizer, not freeze)
-        result = test_epoch(model, source_test_loader, target_test_loader)
+        loss_epoch = train_epoch(model, epoch, train_loader, optimizer, not freeze)
+        result = test_epoch(model, test_loader)
 
         accuracies_test.append(result[0])
         losses_test.append(result[1])
@@ -177,7 +169,7 @@ def test(model):
 
 
 # Perform a single training epoch
-def train_epoch(model, epoch, source_loader, target_loader, optimizers, bn=False):
+def train_epoch(model, epoch, data_loader, optimizers, bn=False):
     # Set the model in training mode
     model.train()
 
@@ -196,7 +188,7 @@ def train_epoch(model, epoch, source_loader, target_loader, optimizers, bn=False
     current = 0
 
     # Perform the training procedure
-    for batch_idx, ((source_data, source_target), (target_data, _ )) in enumerate(itertools.product(source_loader, target_loader)):
+    for batch_idx, (source_data, source_target), (target_data, _) in enumerate(data_loader):
 
         # DO that for source
         # Move the variables to GPU
@@ -239,9 +231,9 @@ def train_epoch(model, epoch, source_loader, target_loader, optimizers, bn=False
 
         # Check for log and update holders
         if batch_idx % LOG_INTERVAL == 0:
-            print('Train Epoch: {} [{:4d}/{:4d}-{:4d} ({:2.0f}%)]\tAvgLoss: {:.6f}'.format(
-                epoch, batch_idx * len(data), len(source_loader.dataset), len(target_loader.dataset),
-                       100. * batch_idx / len(source_loader), loss.item() / BATCH_SIZE))
+            print('Train Epoch: {} [{:4d}/{:4d} ({:2.0f}%)]\tAvgLoss: {:.6f}'.format(
+                epoch, batch_idx * len(data), len(data_loader),
+                       100. * batch_idx / len(data_loader), loss.item() / BATCH_SIZE))
 
         losses += loss.item()
         current += 1
@@ -249,39 +241,38 @@ def train_epoch(model, epoch, source_loader, target_loader, optimizers, bn=False
     return losses / current
 
 
-def test_epoch(model, source_loader, target_loader):
+def test_epoch(model, loader):
     # Put the model in eval mode
     model.eval()
     torch.set_grad_enabled(False)
     # Init holders
-    correct = 0
-
+    s_correct = 0
+    t_correct = 0
+    
     # Perform the evaluation procedure
-    for data, target in source_loader:
+    for (s_data, s_target), (t_data, t_target) in loader:
+    
+        data, target = s_data, s_target
         if cuda:
             data, target = data.cuda(), target.cuda()
 
         output = model(data)
 
         pred = torch.max(output, 1)[1]  # get the index of the max log-probability
-        correct += pred.eq(target.data.view_as(pred)).cpu().sum()  # Check if the prediction is correct
+        s_correct += pred.eq(target.data.view_as(pred)).cpu().sum()  # Check if the prediction is correct
 
-    # Compute accuracy
-    source_accuracy = 100. * float(correct) / (len(source_loader.dataset))
-
-    # Reset and compute for target distribution
-    correct = 0
-    # Perform the evaluation procedure
-    for data, target in target_loader:
+        # Reset and compute for target distribution
+        data, target = t_data, t_target
         if cuda:
             data, target = data.cuda(), target.cuda()
     
         output = model(data)
     
         pred = torch.max(output, 1)[1]  # get the index of the max log-probability
-        correct += pred.eq(target.data.view_as(pred)).cpu().sum()  # Check if the prediction is correct
+        t_correct += pred.eq(target.data.view_as(pred)).cpu().sum()  # Check if the prediction is correct
 
-    target_accuracy = 100. * float(correct) / (len(target_loader.dataset))
+    source_accuracy = 100. * float(s_correct) / (len(loader.dataset))
+    target_accuracy = 100. * float(t_correct) / (len(loader.dataset))
     
     results = [source_accuracy, target_accuracy]
 
