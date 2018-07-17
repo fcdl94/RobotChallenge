@@ -140,18 +140,35 @@ class ResNet(nn.Module):
 
         return x
 
-    #def load_pretrained(self, state_dict):
-     #   for key, value in state_dict:
-      #
-       #     if "bn" in key:
-            
+    def load_pretrained(self, state_dict):
+        dict_model = self.state_dict()
+        for key in state_dict.keys():
+            if "bn" in key:
+                if "weight" in key:
+                    dict_model[key[:-6] + "bn_source.weight"].data.copy_(state_dict[key].data)
+                    dict_model[key[:-6] + "bn_target.weight"].data.copy_(state_dict[key].data)
+                elif "bias" in key:
+                    dict_model[key[:-4] + "bn_source.bias"].data.copy_(state_dict[key].data)
+                    dict_model[key[:-4] + "bn_target.bias"].data.copy_(state_dict[key].data)
+            elif 'downsample' in key :
+                if "0.weight" in key or "0.bias" in key:
+                    dict_model[key].data.copy_(state_dict[key].data)
+                elif "1.weight" in key:
+                    dict_model[key[:-6] + "bn_source.weight"].data.copy_(state_dict[key].data)
+                    dict_model[key[:-6] + "bn_target.weight"].data.copy_(state_dict[key].data)
+                elif "1.bias" in key:
+                    dict_model[key[:-4] + "bn_source.bias"].data.copy_(state_dict[key].data)
+                    dict_model[key[:-4] + "bn_target.bias"].data.copy_(state_dict[key].data)
+            else:
+                dict_model[key].data.copy_(state_dict[key].data)
 
-def resnet18(pretrained=False, **kwargs):
+
+def resnet18(pretrained=True, **kwargs):
     """Constructs a ResNet-18 model.
     Args:
         pretrained (bool): If True, returns a model pre-trained on ImageNet
     """
     model = ResNet(BasicBlock, [2, 2, 2, 2], **kwargs)
-    #if pretrained:
-     #   model.load_pretrained(model_zoo.load_url(model_urls['resnet18']))
+    if pretrained:
+        model.load_pretrained(model_zoo.load_url(model_urls['resnet18']))
     return model
