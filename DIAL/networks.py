@@ -140,8 +140,11 @@ class ResNet(nn.Module):
 
         return x
 
-    def load_pretrained(self, state_dict):
-        pass
+    #def load_pretrained(self, state_dict):
+     #   for key, value in state_dict:
+      #
+       #     if "bn" in key:
+            
 
 def resnet18(pretrained=False, **kwargs):
     """Constructs a ResNet-18 model.
@@ -149,6 +152,6 @@ def resnet18(pretrained=False, **kwargs):
         pretrained (bool): If True, returns a model pre-trained on ImageNet
     """
     model = ResNet(BasicBlock, [2, 2, 2, 2], **kwargs)
-    if pretrained:
-        model.load_pretrained(model_zoo.load_url(model_urls['resnet18']))
+    #if pretrained:
+     #   model.load_pretrained(model_zoo.load_url(model_urls['resnet18']))
     return model
