@@ -51,7 +51,7 @@ class BasicBlock(nn.Module):
     def set_domain(self, source=True):
         self.index = 0 if source else 1
         if self.downsample is not None:
-            self.downsample.set_domain(source)
+            self.downsample[1].set_domain(source)
         self.bn1.set_domain(source)
         self.bn2.set_domain(source)
 
@@ -103,11 +103,8 @@ class ResNet(nn.Module):
         self.bn1.set_domain(source)
         for layer in [self.layer1, self.layer2, self.layer3, self.layer4]:
             for block in layer.modules():
-                if isinstance(block, nn.Sequential):
-                    block[1].set_domain(source)
-                else:
+                if isinstance(block, DomainAdaptationLayer) or isinstance(block, BasicBlock):
                     block.set_domain(source)
-                
             
     def _make_layer(self, block, planes, blocks, stride=1):
         downsample = None
