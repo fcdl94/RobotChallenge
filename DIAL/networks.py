@@ -123,7 +123,7 @@ class ResNet(nn.Module):
             layers.append(block(self.inplanes, planes))
 
         return nn.Sequential(*layers)
-
+    
     def forward(self, x, index):
         x = self.conv1(x)
         x = self.bn1(x, index)
