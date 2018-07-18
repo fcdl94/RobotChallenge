@@ -36,11 +36,11 @@ if __name__ == '__main__':
 
     accuracy = 0
     if not args.test:
-        # (model, prefix, freeze=False, lr=0.001, momentum=0.9, epochs=EPOCHS, visdom_env="robotROD"):
+       # (model, prefix, freeze=False, lr=0.001, momentum=0.9, epochs=EPOCHS, visdom_env="robotROD"):
         accuracy = DIAL.training.train(model, args.source, args.target, freeze=args.frozen, step=args.step,
-                                       batch=args.bs, epochs=args.epochs, visdom_env=args.visdom, lr=args.lr,
-                                       decay=args.decay)
+                                      batch=args.bs, epochs=args.epochs, visdom_env=args.visdom, lr=args.lr,
+                                      decay=args.decay)
     else:
         accuracy = DIAL.training.test(model)
-
+       
     print("Final accuracy = " + str(accuracy))

@@ -261,6 +261,8 @@ def test_epoch(model, epoch, s_loader, t_loader):
         if cuda:
             data, target = data.cuda(), target.cuda()
 
+        model.set_domain(True)
+
         output = model(data)
 
         pred = torch.max(output, 1)[1]  # get the index of the max log-probability
@@ -272,6 +274,7 @@ def test_epoch(model, epoch, s_loader, t_loader):
         if cuda:
             data, target = data.cuda(), target.cuda()
     
+        model.set_domain(False)
         output = model(data)
     
         pred = torch.max(output, 1)[1]  # get the index of the max log-probability

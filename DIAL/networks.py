@@ -1,7 +1,7 @@
 import torch.nn as nn
 import math
 import torch
-
+import DIAL.utils
 
 #TODO modificarlo in modo che non abbia da fare i set index ma direttamente modificando la funzione chiamabile tale che modifichi la forward.
 #   Controllare non sia una follia, ma penso di no.
@@ -22,8 +22,8 @@ class DomainAdaptationLayer(nn.Module):
     def set_domain(self, source=True):
         self.index = 0 if source else 1
   
-    def forward(self, x):
-        if self.index == 0:
+    def forward(self, x, index=True):
+        if index:
             out = self.bn_source(x)
         else:
             out = self.bn_target(x)
@@ -56,17 +56,17 @@ class BasicBlock(nn.Module):
         self.bn1.set_domain(source)
         self.bn2.set_domain(source)
 
-    def forward(self, x):
+    def forward(self, x, index):
         residual = x
 
         out = self.conv1(x)
-        out = self.bn1(out)
+        out = self.bn1(out, index)
         out = self.relu(out)
         out = self.conv2(out)
-        out = self.bn2(out)
+        out = self.bn2(out, index)
 
         if self.downsample is not None:
-            residual = self.downsample(x)
+            residual = self.downsample(x, index)
 
         out += residual
         out = self.relu(out)
@@ -124,16 +124,16 @@ class ResNet(nn.Module):
 
         return nn.Sequential(*layers)
 
-    def forward(self, x):
+    def forward(self, x, index):
         x = self.conv1(x)
-        x = self.bn1(x)
+        x = self.bn1(x, index)
         x = self.relu(x)
         x = self.maxpool(x)
 
-        x = self.layer1(x)
-        x = self.layer2(x)
-        x = self.layer3(x)
-        x = self.layer4(x)
+        x = self.layer1(x, index)
+        x = self.layer2(x, index)
+        x = self.layer3(x, index)
+        x = self.layer4(x, index)
 
         x = self.avgpool(x)
         x = x.view(x.size(0), -1)
@@ -151,7 +151,7 @@ class ResNet(nn.Module):
                 elif "bias" in key:
                     dict_model[key[:-4] + "bn_source.bias"].data.copy_(state_dict[key].data)
                     dict_model[key[:-4] + "bn_target.bias"].data.copy_(state_dict[key].data)
-            elif 'downsample' in key :
+            elif 'downsample' in key:
                 if "0.weight" in key or "0.bias" in key:
                     dict_model[key].data.copy_(state_dict[key].data)
                 elif "1.weight" in key:
@@ -170,7 +170,9 @@ def resnet18(fc_classes=1000, pretrained=None):
         fc_classes (int): The number of classes the model has to output. E.g. ImageNet12 has 1000 classes
         pretrained (bool): If True, returns a model pre-trained on ImageNet
     """
-    model = ResNet(BasicBlock, [2, 2, 2, 2], num_classes=fc_classes,)
+    model = ResNet(BasicBlock, [2, 2, 2, 2], num_classes=fc_classes)
     if pretrained:
         model.load_pretrained(torch.load(pretrained)['state_dict'])
+        # DEBUG
+        assert DIAL.utils.check_equals_bn(model.state_dict(), torch.load(pretrained)['state_dict'])
     return model
