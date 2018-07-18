@@ -86,9 +86,9 @@ def train(model, folder_source, folder_target, freeze=False, lr=0.001, momentum=
     losses_test = []
     accuracies_test = []
 
-    result = test_epoch(model, -1, s_test_loader, d_test_loader)
-    print('Test at start time\tAccuracyTarget: {:.6f}\tAccuracySource: {:.6f}'.format(
-          result[1], result[0]))
+    # result = test_epoch(model, -1, s_test_loader, d_test_loader)
+    # print('Test at start time\tAccuracyTarget: {:.6f}\tAccuracySource: {:.6f}'.format(
+    #      result[1], result[0]))
     
     # perform training epochs time
     best_accuracy = -1
@@ -98,8 +98,8 @@ def train(model, folder_source, folder_target, freeze=False, lr=0.001, momentum=
         scheduler.step()
         print(str(epoch) + "-lr: " + str(optimizer.state_dict()["param_groups"][0]["lr"]))
 
-        loss_epoch = train_epoch(model, epoch, train_loader, optimizer, not freeze)
-        result = test_epoch(model, epoch, s_test_loader, d_test_loader )
+        loss_epoch = train_epoch(model, epoch, train_loader, optimizer)
+        result = test_epoch(model, epoch, s_test_loader, d_test_loader#)
 
         accuracies_test.append(result[0])
         losses_test.append(result[1])
@@ -191,7 +191,7 @@ def test(model):
 
 
 # Perform a single training epoch
-def train_epoch(model, epoch, data_loader, optimizers, bn=False):
+def train_epoch(model, epoch, data_loader, optimizers):
     # Set the model in training mode
     model.train()
 
@@ -199,16 +199,10 @@ def train_epoch(model, epoch, data_loader, optimizers, bn=False):
     target_cost = EntropyLoss()
     
     print("Starting time of Epoch " + str(epoch) + ": " + str(datetime.now().time()))
-    # If BN parameters must be frozen, freeze them
-    if not bn:
-        for m in model.modules():
-            if isinstance(m, nn.BatchNorm1d) or isinstance(m, nn.BatchNorm2d):
-                m.eval()
 
     # Init holders
     source_losses = 0
     target_losses = 0
-    current = 0
     batch_idx = 1
     
     # Perform the training procedure
@@ -220,11 +214,10 @@ def train_epoch(model, epoch, data_loader, optimizers, bn=False):
         # DO that for source
         # Move the variables to GPU
         data, target = source_data, source_target
-        
         if cuda:
             data, target = data.cuda(), target.cuda()
-
-        model.set_domain(True)  # it indicates to use the source DA
+        # Indicate to use the source DA
+        model.set_domain(True)
         # Reset the optimizers
         optimizers.zero_grad()
         # Process input
@@ -235,34 +228,33 @@ def train_epoch(model, epoch, data_loader, optimizers, bn=False):
         source_loss.backward()
         optimizers.step()
         
-        # DO that for target
-        data = target_data
-        if cuda:
-            data = data.cuda()  # we don't use labels for target
-        
-        model.set_domain(False)  # it indicates to use target DA
-        # Reset the optimizers
-        optimizers.zero_grad()
-        # Process input
-        output = model(data)
-        # Compute loss and gradients
-        target_loss = target_cost(output)
-        # Backward and update
-        target_loss.backward()
-        optimizers.step()
+       # # DO that for target
+       # data = target_data
+       # if cuda:
+       #     data = data.cuda()  # we don't use labels for target
+       # # Indicate to use the target DA
+       # model.set_domain(False)
+       # # Reset the optimizers
+       # optimizers.zero_grad()
+       # # Process input
+       # output = model(data)
+       # # Compute loss and gradients
+       # target_loss = target_cost(output)
+       # # Backward and update
+       # target_loss.backward()
+       # optimizers.step()
 
         # Check for log and update holders
         if batch_idx % LOG_INTERVAL == 0:
             print('Train Epoch: {} [{:6d}/{:6d} ({:2.0f}%)]\tSource Loss: {:.6f}\tTarget Loss: {:.6f}'.format(
                 epoch, batch_idx * BATCH_SIZE*2, len(data_loader.dataset)*2,
-                       100. * batch_idx / len(data_loader), source_loss.item() / BATCH_SIZE, target_loss / BATCH_SIZE))
+                       100. * batch_idx / len(data_loader), source_loss.item() / BATCH_SIZE, target_loss.item() / BATCH_SIZE))
 
         source_losses += source_loss.item()
-        target_losses += target_loss.item()
-        current += 1
+       # target_losses += target_loss.item()
         batch_idx += 1
-
-    return [source_losses/current,   target_losses/ current]
+    current = batch_idx-1
+    return [source_losses/current,   target_losses/current]
 
 
 def test_epoch(model, epoch, s_loader, t_loader):
@@ -292,7 +284,7 @@ def test_epoch(model, epoch, s_loader, t_loader):
         if cuda:
             data, target = data.cuda(), target.cuda()
     
-        model.set_domain(False)
+        model.set_domain(True)
         output = model(data)
     
         pred = torch.max(output, 1)[1]  # get the index of the max log-probability
