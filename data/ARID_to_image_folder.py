@@ -19,6 +19,9 @@ if __name__ == '__main__':
     i = 0
     test_index -= 1
 
+    os.mkdir(path + "/val")
+    os.mkdir(path + "/train")
+
     for classname in os.listdir(path):
         if not "train" == classname and not "val" == classname:
             i += 1

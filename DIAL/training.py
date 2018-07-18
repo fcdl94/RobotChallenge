@@ -228,30 +228,30 @@ def train_epoch(model, epoch, data_loader, optimizers):
         source_loss.backward()
         optimizers.step()
         
-       # # DO that for target
-       # data = target_data
-       # if cuda:
-       #     data = data.cuda()  # we don't use labels for target
-       # # Indicate to use the target DA
-       # model.set_domain(False)
-       # # Reset the optimizers
-       # optimizers.zero_grad()
-       # # Process input
-       # output = model(data)
-       # # Compute loss and gradients
-       # target_loss = target_cost(output)
-       # # Backward and update
-       # target_loss.backward()
-       # optimizers.step()
+        # DO that for target
+        data = target_data
+        if cuda:
+            data = data.cuda()  # we don't use labels for target
+        # Indicate to use the target DA
+        model.set_domain(False)
+        # Reset the optimizers
+        optimizers.zero_grad()
+        # Process input
+        output = model(data)
+        # Compute loss and gradients
+        target_loss = target_cost(output)
+        # Backward and update
+        target_loss.backward()
+        optimizers.step()
 
         # Check for log and update holders
         if batch_idx % LOG_INTERVAL == 0:
             print('Train Epoch: {} [{:6d}/{:6d} ({:2.0f}%)]\tSource Loss: {:.6f}\tTarget Loss: {:.6f}'.format(
                 epoch, batch_idx * BATCH_SIZE*2, len(data_loader.dataset)*2,
-                       100. * batch_idx / len(data_loader), source_loss.item(), 0))
+                       100. * batch_idx / len(data_loader), source_loss.item(), target_loss.item()))
 
         source_losses += source_loss.item()
-       # target_losses += target_loss.item()
+        target_losses += target_loss.item()
         batch_idx += 1
     current = batch_idx-1
     return [source_losses/current,   target_losses/current]
@@ -284,7 +284,7 @@ def test_epoch(model, epoch, s_loader, t_loader):
         if cuda:
             data, target = data.cuda(), target.cuda()
     
-        model.set_domain(True)
+        model.set_domain(False)
         output = model(data)
     
         pred = torch.max(output, 1)[1]  # get the index of the max log-probability
