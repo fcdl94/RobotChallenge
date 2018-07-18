@@ -144,7 +144,7 @@ def train(model, folder, prefix, freeze=False, lr=0.001, momentum=0.9, epochs=EP
     return best_accuracy
 
 
-def test(model):
+def test(model, folder):
     # Training steps:
     # Preprocessing (cropping, hor-flipping, resizing) and get data
     # Initialize data processing threads
@@ -154,7 +154,7 @@ def test(model):
     # (note that more complex data transforms can be used to provide better performances e.g. 10 crops)
     data_transform = get_data_transform(False, True)
 
-    dataset = datasets.ImageFolder(root=PATH_TO_DATASETS + '/val', transform=data_transform)
+    dataset = datasets.ImageFolder(root=folder + '/val', transform=data_transform)
     test_loader = torch.utils.data.DataLoader(dataset, batch_size=BATCH_SIZE, shuffle=True, num_workers=workers)
 
     # set loss function

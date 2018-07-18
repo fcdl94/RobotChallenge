@@ -39,7 +39,7 @@ if __name__ == '__main__':
         accuracy = training.train(model, args.folder, args.prefix, freeze=args.frozen, step=args.step, batch=args.bs,
                                   epochs=args.epochs, visdom_env=args.visdom, lr=args.lr, decay=args.decay)
     else:
-        accuracy = training.test(model)
+        accuracy = training.test(model, args.folder)
 
     print("Final accuracy = " + str(accuracy))
 
