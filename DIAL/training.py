@@ -80,6 +80,10 @@ def train(model, folder_source, folder_target, freeze=False, lr=0.001, momentum=
     losses_test = []
     accuracies_test = []
 
+    result = test_epoch(model, -1, s_test_loader, d_test_loader)
+    print('Test at start time\tAccuracyTarget: {:.6f}\tAccuracySource: {:.6f}'.format(
+          result[1], result[0]))
+    
     # perform training epochs time
     best_accuracy = -1
     #val_epoch_min = -1
@@ -235,7 +239,7 @@ def train_epoch(model, epoch, data_loader, optimizers, bn=False):
         # Check for log and update holders
         if batch_idx % LOG_INTERVAL == 0:
             print('Train Epoch: {} [{:6d}/{:6d} ({:2.0f}%)]\tAvgLoss: {:.6f}'.format(
-                epoch, batch_idx * len(data), len(data_loader.dataset),
+                epoch, batch_idx * len(data*2), len(data_loader.dataset*2),
                        100. * batch_idx / len(data_loader), loss.item() / BATCH_SIZE))
 
         losses += loss.item()
