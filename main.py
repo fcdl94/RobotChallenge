@@ -1,5 +1,5 @@
 import training
-import torchvision
+import OBC.networks
 import argparse
 import torch.nn as nn
 
@@ -31,9 +31,7 @@ if __name__ == '__main__':
 
     args = parser.parse_args()
 
-    model = torchvision.models.resnet18(True)
-    num_ftrs = model.fc.in_features
-    model.fc = nn.Linear(num_ftrs, 51)
+    model = OBC.networks.resnet18(51, args.pretrained)
 
     accuracy = 0
     if not args.test:
@@ -44,3 +42,5 @@ if __name__ == '__main__':
         accuracy = training.test(model)
 
     print("Final accuracy = " + str(accuracy))
+
+
