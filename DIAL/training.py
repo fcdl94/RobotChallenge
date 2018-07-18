@@ -202,12 +202,12 @@ def train_epoch(model, epoch, data_loader, optimizers, bn=False):
         if cuda:
             data, target = data.cuda(), target.cuda()
 
-       # model.set_domain(True)  # it indicates to use the source DA
+        model.set_domain(True)  # it indicates to use the source DA
         # Reset the optimizers
         optimizers.zero_grad()
 
         # Process input
-        output = model(data, True)
+        output = model(data)
 
         # Compute loss and gradients
         source_loss = source_cost(output, target)
@@ -217,10 +217,10 @@ def train_epoch(model, epoch, data_loader, optimizers, bn=False):
         if cuda:
             data = data.cuda()  # we don't use labels for target
         
-       # model.set_domain(False)  # it indicates to use target DA
+        model.set_domain(False)  # it indicates to use target DA
         
         # Process input
-        output = model(data, False)
+        output = model(data)
 
         # Compute loss and gradients
         target_loss = target_cost(output)
@@ -259,9 +259,9 @@ def test_epoch(model, epoch, s_loader, t_loader):
         if cuda:
             data, target = data.cuda(), target.cuda()
 
-       # model.set_domain(True)
+        model.set_domain(True)
 
-        output = model(data, True)
+        output = model(data)
 
         pred = torch.max(output, 1)[1]  # get the index of the max log-probability
         s_correct += pred.eq(target.data.view_as(pred)).cpu().sum()  # Check if the prediction is correct
@@ -272,8 +272,8 @@ def test_epoch(model, epoch, s_loader, t_loader):
         if cuda:
             data, target = data.cuda(), target.cuda()
     
-       # model.set_domain(False)
-        output = model(data, False)
+        model.set_domain(False)
+        output = model(data)
     
         pred = torch.max(output, 1)[1]  # get the index of the max log-probability
         t_correct += pred.eq(target.data.view_as(pred)).cpu().sum()  # Check if the prediction is correct

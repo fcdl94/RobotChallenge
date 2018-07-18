@@ -22,8 +22,8 @@ class DomainAdaptationLayer(nn.Module):
     def set_domain(self, source=True):
         self.index = 0 if source else 1
   
-    def forward(self, x, index=True):
-        if index:
+    def forward(self, x):
+        if self.index == 0:
             out = self.bn_source(x)
         else:
             out = self.bn_target(x)
@@ -56,17 +56,17 @@ class BasicBlock(nn.Module):
         self.bn1.set_domain(source)
         self.bn2.set_domain(source)
 
-    def forward(self, x, index):
+    def forward(self, x):
         residual = x
 
         out = self.conv1(x)
-        out = self.bn1(out, index)
+        out = self.bn1(out)
         out = self.relu(out)
         out = self.conv2(out)
-        out = self.bn2(out, index)
+        out = self.bn2(out)
 
         if self.downsample is not None:
-            residual = self.downsample(x, index)
+            residual = self.downsample(x)
 
         out += residual
         out = self.relu(out)
@@ -124,16 +124,16 @@ class ResNet(nn.Module):
 
         return nn.Sequential(*layers)
     
-    def forward(self, x, index):
+    def forward(self, x):
         x = self.conv1(x)
-        x = self.bn1(x, index)
+        x = self.bn1(x)
         x = self.relu(x)
         x = self.maxpool(x)
 
-        x = self.layer1(x, index)
-        x = self.layer2(x, index)
-        x = self.layer3(x, index)
-        x = self.layer4(x, index)
+        x = self.layer1(x)
+        x = self.layer2(x)
+        x = self.layer3(x)
+        x = self.layer4(x)
 
         x = self.avgpool(x)
         x = x.view(x.size(0), -1)
