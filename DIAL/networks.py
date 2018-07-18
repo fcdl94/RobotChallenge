@@ -174,7 +174,7 @@ def resnet18(fc_classes=1000, pretrained=None):
     """
     model = ResNet(BasicBlock, [2, 2, 2, 2], num_classes=fc_classes)
     if pretrained:
-        model.load_pretrained(torch.load(pretrained)['state_dict'])
+        model.load_pretrained(torch.load(model_urls[pretrained])['state_dict'])
         # DEBUG
-        assert DIAL.utils.check_equals_bn(model.state_dict(), torch.load(pretrained)['state_dict'])
+        assert DIAL.utils.check_equals_bn(model.state_dict(), torch.load(model_urls[pretrained])['state_dict'])
     return model

@@ -7,11 +7,11 @@ import torch.nn as nn
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Masked model for VDA challenge')
-    parser.add_argument('--source', type=str, default='/home/fabio/robot_challenge/rod/split1',
+    parser.add_argument('--source', type=str, default='/home/fabio/robot_challenge/rod/split2',
                         help='Where to locate the source imgs')
     parser.add_argument('--target', type=str, default='/home/fabio/robot_challenge/arid',
                         help='Where to locate the target imgs')
-    parser.add_argument('--pretrained', type=str, default="RODS1",
+    parser.add_argument('--pretrained', type=str, default="RODS2",
                         help='Whether to use a pretrained model.')
     parser.add_argument('--lr', type=float, default=1e-3,
                         help='The learning rate to apply into training')

@@ -239,7 +239,7 @@ def train_epoch(model, epoch, data_loader, optimizers):
         # Process input
         output = model(data)
         # Compute loss and gradients
-        target_loss = target_cost(output)
+        target_loss = LAMBDA * target_cost(output)
         # Backward and update
         target_loss.backward()
         optimizers.step()
