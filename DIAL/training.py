@@ -248,7 +248,7 @@ def train_epoch(model, epoch, data_loader, optimizers):
         if batch_idx % LOG_INTERVAL == 0:
             print('Train Epoch: {} [{:6d}/{:6d} ({:2.0f}%)]\tSource Loss: {:.6f}\tTarget Loss: {:.6f}'.format(
                 epoch, batch_idx * BATCH_SIZE*2, len(data_loader.dataset)*2,
-                       100. * batch_idx / len(data_loader), source_loss.item() / BATCH_SIZE, 0 / BATCH_SIZE))
+                       100. * batch_idx / len(data_loader), source_loss.item(), 0))
 
         source_losses += source_loss.item()
        # target_losses += target_loss.item()
