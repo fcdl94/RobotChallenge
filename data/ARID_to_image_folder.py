@@ -25,13 +25,12 @@ if __name__ == '__main__':
             print(str(i) + " " + classname)
 
             src_dir = path+"/"+classname
-            str_i = '%0*d' % (2, i)
 
-            for j, instdir in enumerate(os.listdir(src_dir)):
+            for j, instdir in enumerate(sorted(os.listdir(src_dir))):
                 if j == test_index:
-                    dest = path+"/val/"+str_i
+                    dest = path+"/val/"+classname
                 else:
-                    dest = path+"/train/"+str_i
+                    dest = path+"/train/"+classname
 
                 src = src_dir + "/" + instdir
                 print("\t " + src)

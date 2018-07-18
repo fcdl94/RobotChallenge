@@ -2,8 +2,10 @@ import os
 import argparse
 
 dirs_path = {
-    "rod1": "/home/fabio/robot_challenge/split1",
-    "arid": "/home/fabio/robot_challenge/arid"
+    "rod1": "/home/fabio/robot_challenge/rod/split1/val",
+    "arid": "/home/fabio/robot_challenge/arid/val",
+    "rod2": "/home/fabio/robot_challenge/rod/split2/val",
+    "rod3": "/home/fabio/robot_challenge/rod/split3/val"
 }
 
 if __name__ == '__main__':
@@ -14,6 +16,6 @@ if __name__ == '__main__':
     args = parser.parse_args()
     dataset = args.dataset
 
-    for n_class in os.listdir(dirs_path[dataset]):
-        file = next(os.listdir(dirs_path[dataset]+"/"+n_class))
+    for n_class in sorted(os.listdir(dirs_path[dataset])):
+        file = os.listdir(dirs_path[dataset]+"/"+n_class)[0]
         print(n_class + "\t" + file)
