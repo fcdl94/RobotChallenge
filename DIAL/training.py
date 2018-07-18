@@ -13,7 +13,7 @@ import itertools
 
 # Training settings
 PATH_TO_DATASETS = '/home/lab2atpolito/FabioDatiSSD/ROD'
-BATCH_SIZE = 32
+BATCH_SIZE = 64
 TEST_BATCH_SIZE = 64
 EPOCHS = 60
 STEP = 40
@@ -39,7 +39,12 @@ def train(model, folder_source, folder_target, freeze=False, lr=0.001, momentum=
           decay=10e-5, step=STEP, batch=BATCH_SIZE):
     # Define visualization environment
     vis.env = visdom_env
-
+    global BATCH_SIZE
+    global STEP
+    
+    BATCH_SIZE = batch
+    STEP = step
+    
     # data pre-processing
     workers = WORKERS if cuda else 0
     data_transform = get_data_transform(True, False)
@@ -76,7 +81,8 @@ def train(model, folder_source, folder_target, freeze=False, lr=0.001, momentum=
 
     # Initialize the lists needed for visualization, plus window offset for the graphs
     iters = []
-    losses_training = []
+    source_losses_training = []
+    target_losses_training = []
     losses_test = []
     accuracies_test = []
 
@@ -97,22 +103,33 @@ def train(model, folder_source, folder_target, freeze=False, lr=0.001, momentum=
 
         accuracies_test.append(result[0])
         losses_test.append(result[1])
-        losses_training.append(loss_epoch)
+        source_losses_training.append(loss_epoch[0])
+        target_losses_training.append(loss_epoch[1])
         iters.append(epoch)
 
-        print('Train Epoch: {} \tTrainLoss: {:.6f} \tAccuracyTarget: {:.6f}\tAccuracySource: {:.6f}'.format(
-            epoch, loss_epoch, result[1], result[0]))
+        print('Train Epoch: {} \tSourceTrainLoss: {:.6f} \tTestTrainLoss: {:.6f} \tAccuracySource: {:.6f}'
+              '\tAccuracyTarget: {:.6f}'.format(
+            epoch, loss_epoch[0], loss_epoch[1], result[0], result[1]))
 
         # Print results
         vis.line(
             X=np.array(iters),
-            Y=np.array(losses_training),
+            Y=np.array(source_losses_training),
             opts={
-                'title': ' Training Loss ',
+                'title': ' Source Training Loss ',
                 'xlabel': 'iterations',
                 'ylabel': 'loss'},
-            name='Training Loss ',
+            name='Source Training Loss ',
             win=0)
+        vis.line(
+            X=np.array(iters),
+            Y=np.array(target_losses_training),
+            opts={
+                'title': ' Target Training Loss ',
+                'xlabel': 'iterations',
+                'ylabel': 'loss'},
+            name='Target Training Loss ',
+            win=1)
         vis.line(
             X=np.array(iters),
             Y=np.array(losses_test),
@@ -121,7 +138,7 @@ def train(model, folder_source, folder_target, freeze=False, lr=0.001, momentum=
                 'xlabel': 'iterations',
                 'ylabel': 'accuracy'},
             name='Target Accuracy ',
-            win=1 )
+            win=2)
         vis.line(
             X=np.array(iters),
             Y=np.array(accuracies_test),
@@ -130,7 +147,7 @@ def train(model, folder_source, folder_target, freeze=False, lr=0.001, momentum=
                 'xlabel': 'iterations',
                 'ylabel': 'accuracy'},
             name='Source Accuracy ',
-            win=2 )
+            win=3)
 
         if best_accuracy < result[0]:
             best_accuracy = result[0]
@@ -189,7 +206,8 @@ def train_epoch(model, epoch, data_loader, optimizers, bn=False):
                 m.eval()
 
     # Init holders
-    losses = 0
+    source_losses = 0
+    target_losses = 0
     current = 0
     batch_idx = 1
     
@@ -209,12 +227,13 @@ def train_epoch(model, epoch, data_loader, optimizers, bn=False):
         model.set_domain(True)  # it indicates to use the source DA
         # Reset the optimizers
         optimizers.zero_grad()
-
         # Process input
         output = model(data)
-
         # Compute loss and gradients
         source_loss = source_cost(output, target)
+        # Backward and update
+        source_loss.backward()
+        optimizers.step()
         
         # DO that for target
         data = target_data
@@ -222,18 +241,14 @@ def train_epoch(model, epoch, data_loader, optimizers, bn=False):
             data = data.cuda()  # we don't use labels for target
         
         model.set_domain(False)  # it indicates to use target DA
-        
+        # Reset the optimizers
+        optimizers.zero_grad()
         # Process input
         output = model(data)
-
         # Compute loss and gradients
         target_loss = target_cost(output)
-
-        loss = source_loss + LAMBDA * target_loss
-        
-        loss.backward()
-
-        # Update parameters
+        # Backward and update
+        target_loss.backward()
         optimizers.step()
 
         # Check for log and update holders
@@ -242,11 +257,12 @@ def train_epoch(model, epoch, data_loader, optimizers, bn=False):
                 epoch, batch_idx * BATCH_SIZE*2, len(data_loader.dataset)*2,
                        100. * batch_idx / len(data_loader), source_loss.item() / BATCH_SIZE, target_loss / BATCH_SIZE))
 
-        losses += loss.item()
+        source_losses += source_loss.item()
+        target_losses += target_loss.item()
         current += 1
         batch_idx += 1
 
-    return losses / current
+    return [source_losses/current,   target_losses/ current]
 
 
 def test_epoch(model, epoch, s_loader, t_loader):
