@@ -21,7 +21,7 @@ NO_CUDA = False
 IMAGE_CROP = 224
 LOG_INTERVAL = 10
 WORKERS = 8
-LAMBDA = 0.0
+LAMBDA = 0.01
 
 # image normalization
 IMAGENET_MEAN = [0.485, 0.456, 0.406]
@@ -236,6 +236,12 @@ def train_epoch(model, epoch, data_loader, optimizers):
         output = model(data)
         # Compute loss and gradients
         target_loss = target_cost(output)
+
+        if batch_idx % LOG_INTERVAL == 0:
+            print("BN source grad" + model.bn1.bn_source.weight.data.grad)
+            print("BN target grad" + model.bn1.bn_target.weight.data.grad)
+            
+
 
         # Backward and update
         loss = source_loss + LAMBDA * target_loss
