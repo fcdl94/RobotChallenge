@@ -63,12 +63,6 @@ def train(model, folder_source, folder_target, freeze=False, lr=0.001, momentum=
     s_test_loader = torch.utils.data.DataLoader(s_dataset, batch_size=batch, shuffle=True, num_workers=workers)
     d_test_loader = torch.utils.data.DataLoader(t_dataset, batch_size=batch, shuffle=True, num_workers=workers)
     
-    # If feature extractor free all the network except fc
-    if freeze:
-        for name, par in model.named_parameters():
-            if "fc" not in name:
-                par.requires_grad = False
-
     params_to_optim = list(filter(lambda p: p.requires_grad, model.parameters()))
 
     # set optimizer and scheduler
@@ -237,15 +231,14 @@ def train_epoch(model, epoch, data_loader, optimizers):
         # Compute loss and gradients
         target_loss = target_cost(output)
 
-        if batch_idx % LOG_INTERVAL == 0:
-            print("BN source grad" + model.bn1.bn_source.weight.data.grad)
-            print("BN target grad" + model.bn1.bn_target.weight.data.grad)
-            
-
-
         # Backward and update
         loss = source_loss + LAMBDA * target_loss
         loss.backward()
+
+        if batch_idx % LOG_INTERVAL == 0:
+            print("BN source grad" + str(model.bn1.bn_source.weight.grad))
+            print("BN target grad" + str(model.bn1.bn_target.weight.grad))
+
         optimizers.step()
 
         # Check for log and update holders
