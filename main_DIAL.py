@@ -15,7 +15,7 @@ if __name__ == '__main__':
                         help='Whether to use a pretrained model.')
     parser.add_argument('--lr', type=float, default=1e-3,
                         help='The learning rate to apply into training')
-    parser.add_argument('--decay', type=float, default=1e-5,
+    parser.add_argument('--decay', type=float, default=5*1e-4,
                         help='The learning rate to apply into training')
     parser.add_argument('--bs', type=int, default=64,
                         help='The learning rate to apply into training')
@@ -36,7 +36,6 @@ if __name__ == '__main__':
 
     accuracy = 0
     if not args.test:
-       # (model, prefix, freeze=False, lr=0.001, momentum=0.9, epochs=EPOCHS, visdom_env="robotROD"):
         accuracy = DIAL.training.train(model, args.source, args.target, freeze=args.frozen, step=args.step,
                                       batch=args.bs, epochs=args.epochs, visdom_env=args.visdom, lr=args.lr,
                                       decay=args.decay)

@@ -235,17 +235,17 @@ def train_epoch(model, epoch, data_loader, optimizers):
         loss = source_loss + LAMBDA * target_loss
         loss.backward()
 
-        if batch_idx % LOG_INTERVAL == 0:
-            print("BN source grad" + str(model.bn1.bn_source.weight.grad))
-            print("BN target grad" + str(model.bn1.bn_target.weight.grad))
+        # if batch_idx % LOG_INTERVAL == 0:
+        #    print("BN source grad" + str(model.bn1.bn_source.weight.grad))
+        #    print("BN target grad" + str(model.bn1.bn_target.weight.grad))
 
         optimizers.step()
 
         # Check for log and update holders
         if batch_idx % LOG_INTERVAL == 0:
-            print('Train Epoch: {} [{:6d}/{:6d} ({:2.0f}%)]\tSource Loss: {:.6f}\tTarget Loss: {:.6f}'.format(
+            print('Train Epoch: {} [{:6d}/{:6d} ({:2.0f}%)]\tLoss: {:.6f}\tSource Loss: {:.6f}\tTarget Loss: {:.6f}'.format(
                 epoch, batch_idx * BATCH_SIZE*2, len(data_loader.dataset)*2,
-                       100. * batch_idx / len(data_loader), source_loss.item(), target_loss.item()))
+                       100. * batch_idx / len(data_loader), loss.item(), source_loss.item(), target_loss.item()))
 
         source_losses += source_loss.item()
         target_losses += target_loss.item()

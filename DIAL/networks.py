@@ -17,8 +17,22 @@ model_urls = {
 class DomainAdaptationLayer(nn.Module):
     def __init__(self, planes):
         super(DomainAdaptationLayer, self).__init__()
+        
         self.bn_source = nn.BatchNorm2d(planes)
+        torch.nn.init.constant(self.bn_source.weight, 1)
+        torch.nn.init.constant(self.bn_source.bias, 0)
+        self.bn_source.weight.requires_grad = False
+        self.bn_source.bias.requires_grad = False
+        
         self.bn_target = nn.BatchNorm2d(planes)
+        torch.nn.init.constant(self.bn_target.weight, 1)
+        torch.nn.init.constant(self.bn_target.bias, 0)
+        self.bn_target.weight.requires_grad = False
+        self.bn_target.bias.requires_grad = False
+        
+        self.register_parameter('weight', None)
+        self.register_parameter('bias', None)
+        
         self.index = 0
   
     def set_domain(self, source=True):
@@ -29,6 +43,7 @@ class DomainAdaptationLayer(nn.Module):
             out = self.bn_source(x)
         else:
             out = self.bn_target(x)
+        out = self.weight * out + self.bias
         return out
 
 
@@ -146,24 +161,7 @@ class ResNet(nn.Module):
     def load_pretrained(self, state_dict):
         dict_model = self.state_dict()
         for key in state_dict.keys():
-            if "bn" in key:
-                if "weight" in key:
-                    dict_model[key[:-6] + "bn_source.weight"].data.copy_(state_dict[key].data)
-                    dict_model[key[:-6] + "bn_target.weight"].data.copy_(state_dict[key].data)
-                elif "bias" in key:
-                    dict_model[key[:-4] + "bn_source.bias"].data.copy_(state_dict[key].data)
-                    dict_model[key[:-4] + "bn_target.bias"].data.copy_(state_dict[key].data)
-            elif 'downsample' in key:
-                if "0.weight" in key or "0.bias" in key:
-                    dict_model[key].data.copy_(state_dict[key].data)
-                elif "1.weight" in key:
-                    dict_model[key[:-6] + "bn_source.weight"].data.copy_(state_dict[key].data)
-                    dict_model[key[:-6] + "bn_target.weight"].data.copy_(state_dict[key].data)
-                elif "1.bias" in key:
-                    dict_model[key[:-4] + "bn_source.bias"].data.copy_(state_dict[key].data)
-                    dict_model[key[:-4] + "bn_target.bias"].data.copy_(state_dict[key].data)
-            else:
-                dict_model[key].data.copy_(state_dict[key].data)
+            dict_model[key].data.copy_(state_dict[key].data)
 
 
 def resnet18(fc_classes=1000, pretrained=None):
