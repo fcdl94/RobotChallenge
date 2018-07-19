@@ -10,7 +10,8 @@ import DIAL.utils
 model_urls = {
     'resnet18': 'https://download.pytorch.org/models/resnet18-5c106cde.pth',
     'RODS1': '/home/fabio/robot_challenge/RobotChallenge/RODx_models/S1LR23BS64t1.pth',
-    'RODS2': '/home/fabio/robot_challenge/RobotChallenge/RODx_models/S2LR23BS64t1.pth'
+    'RODS2': '/home/fabio/robot_challenge/RobotChallenge/RODx_models/S2LR23BS64t1.pth',
+    "local": "RODx_models/S1LR23BS64t1.pth"
 }
 
 
@@ -19,19 +20,19 @@ class DomainAdaptationLayer(nn.Module):
         super(DomainAdaptationLayer, self).__init__()
         
         self.bn_source = nn.BatchNorm2d(planes)
-        torch.nn.init.constant(self.bn_source.weight, 1)
-        torch.nn.init.constant(self.bn_source.bias, 0)
+        torch.nn.init.constant_(self.bn_source.weight, 1)
+        torch.nn.init.constant_(self.bn_source.bias, 0)
         self.bn_source.weight.requires_grad = False
         self.bn_source.bias.requires_grad = False
         
         self.bn_target = nn.BatchNorm2d(planes)
-        torch.nn.init.constant(self.bn_target.weight, 1)
-        torch.nn.init.constant(self.bn_target.bias, 0)
+        torch.nn.init.constant_(self.bn_target.weight, 1)
+        torch.nn.init.constant_(self.bn_target.bias, 0)
         self.bn_target.weight.requires_grad = False
         self.bn_target.bias.requires_grad = False
-        
-        self.register_parameter('weight', None)
-        self.register_parameter('bias', None)
+
+        self.weight = torch.nn.parameter.Parameter(torch.Tensor(planes))
+        self.bias = torch.nn.parameter.Parameter(torch.Tensor(planes))
         
         self.index = 0
   
@@ -161,7 +162,8 @@ class ResNet(nn.Module):
     def load_pretrained(self, state_dict):
         dict_model = self.state_dict()
         for key in state_dict.keys():
-            dict_model[key].data.copy_(state_dict[key].data)
+            if "running_" not in key:
+                dict_model[key].data.copy_(state_dict[key].data)
 
 
 def resnet18(fc_classes=1000, pretrained=None):
