@@ -3,7 +3,7 @@ import argparse
 
 dirs_path = {
     "rod1": "/home/fabio/robot_challenge/rod/split1/val",
-    "arid": "/home/fabio/robot_challenge/arid/val",
+    "arid": "/home/fabio/robot_challenge/arid/all",
     "rod2": "/home/fabio/robot_challenge/rod/split2/val",
     "rod3": "/home/fabio/robot_challenge/rod/split3/val"
 }

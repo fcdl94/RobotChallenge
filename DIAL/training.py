@@ -21,7 +21,7 @@ NO_CUDA = False
 IMAGE_CROP = 224
 LOG_INTERVAL = 10
 WORKERS = 8
-LAMBDA = 0.1
+LAMBDA = 0.0
 
 # image normalization
 IMAGENET_MEAN = [0.485, 0.456, 0.406]
@@ -59,7 +59,7 @@ def train(model, folder_source, folder_target, freeze=False, lr=0.001, momentum=
     data_transform = get_data_transform(False, False)
 
     s_dataset = datasets.ImageFolder(root=folder_source + '/val', transform=data_transform)
-    t_dataset = datasets.ImageFolder(root=folder_target + '/val', transform=data_transform)
+    t_dataset = datasets.ImageFolder(root=folder_target + '/train', transform=data_transform)
     s_test_loader = torch.utils.data.DataLoader(s_dataset, batch_size=batch, shuffle=True, num_workers=workers)
     d_test_loader = torch.utils.data.DataLoader(t_dataset, batch_size=batch, shuffle=True, num_workers=workers)
     
@@ -238,7 +238,7 @@ def train_epoch(model, epoch, data_loader, optimizers):
         target_loss = target_cost(output)
 
         # Backward and update
-        loss = source_loss + LAMBDA * target_losses
+        loss = source_loss + LAMBDA * target_loss
         loss.backward()
         optimizers.step()
 
