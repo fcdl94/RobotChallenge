@@ -44,7 +44,7 @@ class DomainAdaptationLayer(nn.Module):
             out = self.bn_source(x)
         else:
             out = self.bn_target(x)
-        out = out * self.weight
+        out = self.weight * out
         out = out + self.bias
         return out
 
