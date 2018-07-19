@@ -11,7 +11,7 @@ model_urls = {
     'resnet18': 'https://download.pytorch.org/models/resnet18-5c106cde.pth',
     'RODS1': '/home/fabio/robot_challenge/RobotChallenge/RODx_models/S1LR23BS64t1.pth',
     'RODS2': '/home/fabio/robot_challenge/RobotChallenge/RODx_models/S2LR23BS64t1.pth',
-    "local": "RODx_models/S1LR23BS64t1.pth"
+    'local': "RODx_models/S1LR23BS64t1.pth"
 }
 
 
@@ -30,9 +30,8 @@ class DomainAdaptationLayer(nn.Module):
         torch.nn.init.constant_(self.bn_target.bias, 0)
         self.bn_target.weight.requires_grad = False
         self.bn_target.bias.requires_grad = False
-
-        self.weight = torch.nn.parameter.Parameter(torch.Tensor(planes))
-        self.bias = torch.nn.parameter.Parameter(torch.Tensor(planes))
+        
+        self.scale = nn.BatchNorm2d(planes, track_running_stats=False)
         
         self.index = 0
   
@@ -44,8 +43,8 @@ class DomainAdaptationLayer(nn.Module):
             out = self.bn_source(x)
         else:
             out = self.bn_target(x)
-        out = self.weight * out
-        out = out + self.bias
+        
+        out = self.scale(out)
         return out
 
 
@@ -163,7 +162,19 @@ class ResNet(nn.Module):
     def load_pretrained(self, state_dict):
         dict_model = self.state_dict()
         for key in state_dict.keys():
-            if "running_" not in key:
+            if "bn" in key:
+                if "weight" in key:
+                    dict_model[key[:-6] + "scale.weight"].data.copy_(state_dict[key].data)
+                elif "bias" in key:
+                    dict_model[key[:-4] + "scale.bias"].data.copy_(state_dict[key].data)
+            elif 'downsample' in key:
+                if "0.weight" in key or "0.bias" in key:
+                    dict_model[key].data.copy_(state_dict[key].data)
+                elif "1.weight" in key:
+                    dict_model[key[:-6] + "scale.weight"].data.copy_(state_dict[key].data)
+                elif "1.bias" in key:
+                    dict_model[key[:-4] + "scale.bias"].data.copy_(state_dict[key].data)
+            else:
                 dict_model[key].data.copy_(state_dict[key].data)
 
 
