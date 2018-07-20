@@ -21,7 +21,7 @@ NO_CUDA = False
 IMAGE_CROP = 224
 LOG_INTERVAL = 10
 WORKERS = 8
-LAMBDA = 0.01
+LAMBDA = 0.1
 
 # image normalization
 IMAGENET_MEAN = [0.485, 0.456, 0.406]
@@ -190,8 +190,8 @@ def train_epoch(model, epoch, data_loader, optimizers):
     model.train()
 
     source_cost = nn.CrossEntropyLoss()
-    target_cost = nn.CrossEntropyLoss()
-    # target_cost = EntropyLoss()
+    #target_cost = nn.CrossEntropyLoss()
+    target_cost = EntropyLoss()
     
     print("Starting time of Epoch " + str(epoch) + ": " + str(datetime.now().time()))
 
@@ -223,18 +223,18 @@ def train_epoch(model, epoch, data_loader, optimizers):
         
         # DO that for TARGET
         # Move the variables to GPU
-        data, target = target_data, target_target
+        data, target = target_data
         if cuda:
-            data, target = data.cuda(), target.cuda()
+            data, target = data.cuda()
         # Indicate to use the target DA
         model.set_domain(False)
         # Process input
         output = model(data)
         # Compute loss and gradients
-        target_loss = target_cost(output, target)
+        target_loss = target_cost(output)
 
         # Backward and update
-        loss = source_loss + target_loss
+        loss = source_loss + LAMBDA * target_loss
         loss.backward()
 
         # if batch_idx % LOG_INTERVAL == 0:
