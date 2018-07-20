@@ -46,8 +46,8 @@ class DomainAdaptationLayer(nn.Module):
         else:
             out = self.bn_target(x)
         
-        out = self.weight.view(1, self.weight.size[0], 1, 1) * out + self.bias.view(1, self.weight.size[0], 1, 1)
-        return out
+        res = self.weight.view(1, self.weight.size[0], 1, 1) * out + self.bias.view(1, self.weight.size[0], 1, 1)
+        return res
 
 
 def conv3x3(in_planes, out_planes, stride=1):
