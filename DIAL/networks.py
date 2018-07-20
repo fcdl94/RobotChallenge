@@ -114,8 +114,7 @@ class ResNet(nn.Module):
     def set_domain(self, source=True):
         for m in self.modules():
             if isinstance(m, DomainAdaptationLayer):
-                # m.set_domain(source)
-                pass
+                m.set_domain(source)
             
     def _make_layer(self, block, planes, blocks, stride=1):
         downsample = None

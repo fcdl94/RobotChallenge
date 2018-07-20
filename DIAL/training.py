@@ -209,7 +209,7 @@ def train_epoch(model, epoch, data_loader, optimizers):
         # Reset the optimizers
         optimizers.zero_grad()
         
-        # DO that for source
+        # DO that for SOURCE
         # Move the variables to GPU
         data, target = source_data, source_target
         if cuda:
@@ -221,7 +221,8 @@ def train_epoch(model, epoch, data_loader, optimizers):
         # Compute loss and gradients
         source_loss = source_cost(output, target)
         
-        # DO that for target
+        # DO that for TARGET
+        # Move the variables to GPU
         data, target = target_data, target_target
         if cuda:
             data, target = data.cuda(), target.cuda()
