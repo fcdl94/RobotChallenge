@@ -222,9 +222,9 @@ def train_epoch(model, epoch, data_loader, optimizers):
         source_loss = source_cost(output, target)
         
         # DO that for target
-        data = target_data
+        data, target = target_data, target_target
         if cuda:
-            data = data.cuda()  # we don't use labels for target
+            data, target = data.cuda(), target.cuda()
         # Indicate to use the target DA
         model.set_domain(False)
         # Process input
@@ -233,7 +233,7 @@ def train_epoch(model, epoch, data_loader, optimizers):
         target_loss = target_cost(output, target)
 
         # Backward and update
-        loss = source_loss + LAMBDA * target_loss
+        loss = source_loss + target_loss
         loss.backward()
 
         # if batch_idx % LOG_INTERVAL == 0:
