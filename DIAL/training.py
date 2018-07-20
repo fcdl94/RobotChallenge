@@ -60,8 +60,8 @@ def train(model, folder_source, folder_target, freeze=False, lr=0.001, momentum=
 
     s_dataset = datasets.ImageFolder(root=folder_source + '/val', transform=data_transform)
     t_dataset = datasets.ImageFolder(root=folder_target + '/train', transform=data_transform)
-    s_test_loader = torch.utils.data.DataLoader(s_dataset, batch_size=batch, shuffle=True, num_workers=workers)
-    d_test_loader = torch.utils.data.DataLoader(t_dataset, batch_size=batch, shuffle=True, num_workers=workers)
+    s_test_loader = torch.utils.data.DataLoader(s_dataset, batch_size=batch, shuffle=False, num_workers=workers)
+    d_test_loader = torch.utils.data.DataLoader(t_dataset, batch_size=batch, shuffle=False, num_workers=workers)
     
     params_to_optim = list(filter(lambda p: p.requires_grad, model.parameters()))
 
