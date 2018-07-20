@@ -60,8 +60,8 @@ def train(model, folder_source, folder_target, freeze=False, lr=0.001, momentum=
 
     s_dataset = datasets.ImageFolder(root=folder_source + '/val', transform=data_transform)
     t_dataset = datasets.ImageFolder(root=folder_target + '/train', transform=data_transform)
-    s_test_loader = torch.utils.data.DataLoader(s_dataset, batch_size=batch, shuffle=True, num_workers=workers)
-    d_test_loader = torch.utils.data.DataLoader(t_dataset, batch_size=batch, shuffle=True, num_workers=workers)
+    s_test_loader = torch.utils.data.DataLoader(s_dataset, batch_size=batch, shuffle=False, num_workers=workers)
+    d_test_loader = torch.utils.data.DataLoader(t_dataset, batch_size=batch, shuffle=False, num_workers=workers)
     
     params_to_optim = list(filter(lambda p: p.requires_grad, model.parameters()))
 
@@ -190,7 +190,8 @@ def train_epoch(model, epoch, data_loader, optimizers):
     model.train()
 
     source_cost = nn.CrossEntropyLoss()
-    target_cost = EntropyLoss()
+    target_cost = nn.CrossEntropyLoss()
+    # target_cost = EntropyLoss()
     
     print("Starting time of Epoch " + str(epoch) + ": " + str(datetime.now().time()))
 
@@ -229,7 +230,7 @@ def train_epoch(model, epoch, data_loader, optimizers):
         # Process input
         output = model(data)
         # Compute loss and gradients
-        target_loss = target_cost(output)
+        target_loss = target_cost(output, target)
 
         # Backward and update
         loss = source_loss + LAMBDA * target_loss

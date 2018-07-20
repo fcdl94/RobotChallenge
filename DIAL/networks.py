@@ -32,7 +32,8 @@ class DomainAdaptationLayer(nn.Module):
         self.bn_target.bias.requires_grad = False
         
         self.scale = nn.BatchNorm2d(planes, track_running_stats=False)
-        
+        ## todo riprova for esterno, for interno con esterno il BS ed interno il Channel
+        # interno ancora sarebbe come moltiplicare la matrice per una costante
         self.index = 0
   
     def set_domain(self, source=True):
