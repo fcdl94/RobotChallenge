@@ -220,7 +220,7 @@ def train_epoch(model, epoch, data_loader, optimizers):
         #output = model(data)
         ## Compute loss and gradients
         #source_loss = source_cost(output, target)
-        source_loss = 0
+        source_loss = torch.Tensor(0)
         
         # DO that for target
         data, target = target_data, target_target
