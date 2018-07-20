@@ -223,9 +223,9 @@ def train_epoch(model, epoch, data_loader, optimizers):
         
         # DO that for TARGET
         # Move the variables to GPU
-        data, target = target_data
+        data = target_data
         if cuda:
-            data, target = data.cuda()
+            data = data.cuda()
         # Indicate to use the target DA
         model.set_domain(False)
         # Process input
