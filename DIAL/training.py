@@ -209,18 +209,17 @@ def train_epoch(model, epoch, data_loader, optimizers):
         # Reset the optimizers
         optimizers.zero_grad()
         
-        ## DO that for source
-        ## Move the variables to GPU
-        #data, target = source_data, source_target
-        #if cuda:
-        #    data, target = data.cuda(), target.cuda()
-        ## Indicate to use the source DA
-        #model.set_domain(True)
-        ## Process input
-        #output = model(data)
-        ## Compute loss and gradients
-        #source_loss = source_cost(output, target)
-        source_loss = torch.Tensor(0)
+        # DO that for source
+        # Move the variables to GPU
+        data, target = source_data, source_target
+        if cuda:
+            data, target = data.cuda(), target.cuda()
+        # Indicate to use the source DA
+        model.set_domain(True)
+        # Process input
+        output = model(data)
+        # Compute loss and gradients
+        source_loss = source_cost(output, target)
         
         # DO that for target
         data, target = target_data, target_target
@@ -234,8 +233,7 @@ def train_epoch(model, epoch, data_loader, optimizers):
         target_loss = target_cost(output, target)
 
         # Backward and update
-        # loss = source_loss + target_loss
-        loss = target_loss
+        loss = source_loss + target_loss
         loss.backward()
 
         # if batch_idx % LOG_INTERVAL == 0:
