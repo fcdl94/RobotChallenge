@@ -119,12 +119,13 @@ class ResNet(nn.Module):
                 nn.init.constant_(m.bias, 0)
 
     def set_domain(self, source=True):
-        self.index = 0 if source else 1
-        self.bn1.set_domain(source)
-        for layer in [self.layer1, self.layer2, self.layer3, self.layer4]:
-            for block in layer.modules():
-                if isinstance(block, DomainAdaptationLayer) or isinstance(block, BasicBlock):
-                    block.set_domain(source)
+       #self.index = 0 if source else 1
+       #self.bn1.set_domain(source)
+       #for layer in [self.layer1, self.layer2, self.layer3, self.layer4]:
+       #    for block in layer.modules():
+       #        if isinstance(block, #) or isinstance(block, BasicBlock):
+       #            block.set_domain(source)
+        pass
             
     def _make_layer(self, block, planes, blocks, stride=1):
         downsample = None
