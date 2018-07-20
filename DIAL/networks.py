@@ -32,8 +32,8 @@ class DomainAdaptationLayer(nn.Module):
         self.bn_target.bias.requires_grad = False
         
         # self.scale = nn.BatchNorm2d(planes, track_running_stats=False)
-        self.weight = torch.nn.parameter.Parameter(planes)
-        self.bias = torch.nn.parameter.Parameter(planes)
+        self.weight = torch.nn.parameter.Parameter(torch.Tensor(planes))
+        self.bias = torch.nn.parameter.Parameter(torch.Tensor(planes))
         
         self.index = 0
   
