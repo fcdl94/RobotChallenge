@@ -31,9 +31,10 @@ class DomainAdaptationLayer(nn.Module):
         self.bn_target.weight.requires_grad = False
         self.bn_target.bias.requires_grad = False
         
-        self.scale = nn.BatchNorm2d(planes, track_running_stats=False)
-        ## todo riprova for esterno, for interno con esterno il BS ed interno il Channel
-        # interno ancora sarebbe come moltiplicare la matrice per una costante
+        # self.scale = nn.BatchNorm2d(planes, track_running_stats=False)
+        self.weight = torch.nn.parameter.Parameter(torch.Tensor(planes))
+        self.bias = torch.nn.parameter.Parameter(torch.Tensor(planes))
+        
         self.index = 0
   
     def set_domain(self, source=True):
@@ -45,8 +46,8 @@ class DomainAdaptationLayer(nn.Module):
         else:
             out = self.bn_target(x)
         
-        out = self.scale(out)
-        return out
+        res = self.weight.view(1, self.weight.size()[0], 1, 1) * out + self.bias.view(1, self.weight.size()[0], 1, 1)
+        return res
 
 
 def conv3x3(in_planes, out_planes, stride=1):
@@ -163,19 +164,7 @@ class ResNet(nn.Module):
     def load_pretrained(self, state_dict):
         dict_model = self.state_dict()
         for key in state_dict.keys():
-            if "bn" in key:
-                if "weight" in key:
-                    dict_model[key[:-6] + "scale.weight"].data.copy_(state_dict[key].data)
-                elif "bias" in key:
-                    dict_model[key[:-4] + "scale.bias"].data.copy_(state_dict[key].data)
-            elif 'downsample' in key:
-                if "0.weight" in key or "0.bias" in key:
-                    dict_model[key].data.copy_(state_dict[key].data)
-                elif "1.weight" in key:
-                    dict_model[key[:-6] + "scale.weight"].data.copy_(state_dict[key].data)
-                elif "1.bias" in key:
-                    dict_model[key[:-4] + "scale.bias"].data.copy_(state_dict[key].data)
-            else:
+            if "running" not in key:
                 dict_model[key].data.copy_(state_dict[key].data)
 
 
