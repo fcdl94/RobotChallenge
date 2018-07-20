@@ -20,8 +20,8 @@ class DomainAdaptationLayer(nn.Module):
         super(DomainAdaptationLayer, self).__init__()
         
         self.bn_source = nn.BatchNorm2d(planes)
-        torch.nn.init.constant_(self.bn_source.weight, 1)
-        torch.nn.init.constant_(self.bn_source.bias, 0)
+        nn.init.constant_(self.bn_source.weight, 1)
+        nn.init.constant_(self.bn_source.bias, 0)
         self.bn_source.weight.requires_grad = False
         self.bn_source.bias.requires_grad = False
         
@@ -60,20 +60,13 @@ class BasicBlock(nn.Module):
     def __init__(self, inplanes, planes, stride=1, downsample=None):
         super(BasicBlock, self).__init__()
         self.conv1 = conv3x3(inplanes, planes, stride)
-        self.bn1 = nn.BatchNorm2d(planes)
+        self.bn1 = DomainAdaptationLayer(planes)
         self.relu = nn.ReLU(inplace=True)
         self.conv2 = conv3x3(planes, planes)
-        self.bn2 = nn.BatchNorm2d(planes)
+        self.bn2 = DomainAdaptationLayer(planes)
         self.downsample = downsample
         self.stride = stride
         self.index = 0
-
-    def set_domain(self, source=True):
-        self.index = 0 if source else 1
-        if self.downsample is not None:
-            self.downsample[1].set_domain(source)
-        self.bn1.set_domain(source)
-        self.bn2.set_domain(source)
 
     def forward(self, x):
         residual = x
@@ -100,7 +93,7 @@ class ResNet(nn.Module):
         super(ResNet, self).__init__()
         self.conv1 = nn.Conv2d(3, 64, kernel_size=7, stride=2, padding=3,
                                bias=False)
-        self.bn1 = nn.BatchNorm2d(64)
+        self.bn1 = DomainAdaptationLayer(64)
         self.relu = nn.ReLU(inplace=True)
         self.maxpool = nn.MaxPool2d(kernel_size=3, stride=2, padding=1)
         self.layer1 = self._make_layer(block, 64, layers[0])
@@ -119,13 +112,10 @@ class ResNet(nn.Module):
                 nn.init.constant_(m.bias, 0)
 
     def set_domain(self, source=True):
-       #self.index = 0 if source else 1
-       #self.bn1.set_domain(source)
-       #for layer in [self.layer1, self.layer2, self.layer3, self.layer4]:
-       #    for block in layer.modules():
-       #        if isinstance(block, #) or isinstance(block, BasicBlock):
-       #            block.set_domain(source)
-        pass
+        for m in self.modules():
+            if isinstance(m, DomainAdaptationLayer):
+                # m.set_domain(source)
+                pass
             
     def _make_layer(self, block, planes, blocks, stride=1):
         downsample = None
@@ -133,7 +123,7 @@ class ResNet(nn.Module):
             downsample = nn.Sequential(
                 nn.Conv2d(self.inplanes, planes * block.expansion,
                           kernel_size=1, stride=stride, bias=False),
-                nn.BatchNorm2d(planes * block.expansion),
+                DomainAdaptationLayer(planes * block.expansion),
             )
 
         layers = []
