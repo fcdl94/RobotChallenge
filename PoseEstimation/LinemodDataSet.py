@@ -1,5 +1,5 @@
-import torch.nn as nn
-from torch.utils.data import Dataset, DataLoader
+from torch.utils.data import Dataset
+import torch
 import numpy as np
 import sys
 import os
@@ -14,7 +14,7 @@ def linemod_rotation(fname):
     """
     R = open(fname)
     R.readline()  # discard first line
-    R = np.float32(R.read().split()).reshape((3, 3))  # save the matrix
+    R = np.float32(R.read().split()).reshape(9)  # save the matrix
     
     return R
 
@@ -31,7 +31,8 @@ def make_dataset(dir, class_to_idx):
             path = os.path.join(d, "color" + str(index) + ".jpg")
             path_rot = os.path.join(d, "rot" + str(index) + ".rot")
             rotation_matrix = linemod_rotation(path_rot)
-            item = (path, class_to_idx[target], rotation_matrix)
+            t = [class_to_idx[target]] + rotation_matrix.tolist()
+            item = (path, t)
             images.append(item)
             index += 1
 
@@ -48,11 +49,11 @@ def pil_loader(path):
 class LinemodDataset(Dataset):
     """ Linemod dataset."""
     
-    def __init__(self, root_dir, transform = None, target_transform = None):
+    def __init__(self, root_dir, transform=None, target_transform=None):
     
         classes, class_to_idx = self._find_classes(root_dir)
         samples = make_dataset(root_dir, class_to_idx)
-        if len(samples) == 0 :
+        if len(samples) == 0:
             raise (RuntimeError("Found 0 files in subfolder of " + root_dir + "\n"))
         
         self.loader = pil_loader
@@ -76,14 +77,14 @@ class LinemodDataset(Dataset):
                 target is class_index of the target class
                 rot_matrix is the rotational matrix of the object
         """
-        path, target, R = self.samples[index]
+        path, target = self.samples[index]
         sample = self.loader(path)
         if self.transform is not None:
             sample = self.transform(sample)
         if self.target_transform is not None:
-            R = self.target_transform(R)
+            target = self.target_transform(target)
     
-        return sample, target, R
+        return sample, target
 
     def _find_classes(self, dir):
         """
