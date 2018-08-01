@@ -6,8 +6,6 @@ import torchvision
 from torchvision import transforms, datasets
 from datetime import datetime
 import numpy as np
-#import matplotlib.pyplot as plt
-
 import visdom
 
 # Training settings
@@ -24,7 +22,7 @@ WORKERS = 8
 # image normalization
 IMAGENET_MEAN = [0.485, 0.456, 0.406]
 #IMAGENET_STD = [0.229, 0.224, 0.225]
-IMAGENET_STD = [1,1,1]
+IMAGENET_STD = [1, 1, 1]
 
 # Initialize visualization tool
 vis = visdom.Visdom()
@@ -34,7 +32,7 @@ cuda = not NO_CUDA and torch.cuda.is_available()
 
 
 def train(model, folder, prefix, freeze=False, lr=0.001, momentum=0.9, epochs=EPOCHS, visdom_env="robotROD",
-          decay=10e-5, step=STEP, batch=BATCH_SIZE):
+          decay=10e-5, step=STEP, batch=BATCH_SIZE, cost_function_p=nn.CrossEntropyLoss):
     # Define visualization environment
     vis.env = visdom_env
 
@@ -69,7 +67,7 @@ def train(model, folder, prefix, freeze=False, lr=0.001, momentum=0.9, epochs=EP
     scheduler = optim.lr_scheduler.StepLR(optimizer, step)
 
     # set loss function
-    cost_function = nn.CrossEntropyLoss()
+    cost_function = cost_function_p()
 
     # prepare for training
     if cuda:
@@ -280,25 +278,3 @@ def get_data_transform(mirror, scaling):
                 transforms.Normalize(mean=IMAGENET_MEAN, std=IMAGENET_STD)
             ])
     return data_transform
-
-
-def print_loaded_data(dataloader):
-    def imshow(inp, title=None):
-        """Imshow for Tensor."""
-        inp = inp.numpy().transpose((1, 2, 0))
-        mean = np.array(IMAGENET_MEAN)
-        std = np.array(IMAGENET_STD)
-        inp = std * inp + mean
-        inp = np.clip(inp, 0, 1)
-        plt.imshow(inp)
-        if title is not None:
-            plt.title(title)
-        plt.pause(0.001)  # pause a bit so that plots are updated
-
-    # Get a batch of training data
-    inputs, classes = next(iter(dataloader))
-
-    # Make a grid from batch
-    out = torchvision.utils.make_grid(inputs)
-
-    imshow(out, title=[x for x in classes])

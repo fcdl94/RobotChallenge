@@ -4,6 +4,7 @@ import numpy as np
 import sys
 import os
 from PIL import Image
+from PoseEstimation.utils import rot_matrix_to_RPY
 
 
 def linemod_rotation(fname):
@@ -14,7 +15,9 @@ def linemod_rotation(fname):
     """
     R = open(fname)
     R.readline()  # discard first line
-    R = np.float32(R.read().split()).reshape(9)  # save the matrix
+    R = np.float32(R.read().split()).reshape(3, 3)  # save the matrix
+    
+    R = rot_matrix_to_RPY(R)
     
     return R
 
