@@ -37,9 +37,12 @@ if __name__ == '__main__':
                         help='Select the visdom environment.')
     parser.add_argument('--task', type=str, default='PE',
                         help='Which is the task to run')
+    parser.add_argument('--classes', type=int, default=15,
+                        help='Number of classes in the set.')
 
     args = parser.parse_args()
     
+    CLASSES = args.classes
     task = args.task
     if task not in task_list:
         raise(Exception("Please be sure to use available task"))
@@ -48,7 +51,7 @@ if __name__ == '__main__':
     if task == "PE":
         import PoseEstimation.PELoss as pel
         from PoseEstimation.LinemodDataset import LinemodDataset
-        classes = 2 + 3
+        classes = CLASSES + 3
         cost_function = pel.PE3DLoss(2)
         metric = pel.PEMetric(2, 0.1)  # 0.04 means nearly 5 degrees
         train_loader = dl.get_image_folder_loaders(args.folder, LinemodDataset, False, True, args.bs)
