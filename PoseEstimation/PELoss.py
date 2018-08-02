@@ -38,10 +38,10 @@ class PEMetric(nn.Module):
         class_target, rot_target = target[:, 0].long(), target[:, 1:]
         
         pred = torch.max(class_input, 1)[1]
-        correct_class = pred.eq(class_target.data.view_as(pred)).cpu()
+        correct_class = pred.eq(class_target.data.view_as(pred))
         
         correct_pose = rotation_equals(rot_input, rot_target, self.threshold)
 
-        correct = (correct_class + correct_pose) == 2  # to be correct both must be correct [1 and 1]
+        correct = (correct_class & correct_pose).cpu()  # to be correct both must be correct [1 and 1]
         
-        return correct
+        return correct.sum(-1)
