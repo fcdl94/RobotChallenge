@@ -34,7 +34,7 @@ def make_dataset(dir, class_to_idx):
             path = os.path.join(d, "color" + str(index) + ".jpg")
             path_rot = os.path.join(d, "rot" + str(index) + ".rot")
             rotation_matrix = linemod_rotation(path_rot)
-            t = [class_to_idx[target]] + rotation_matrix.tolist()
+            t = [class_to_idx[target]] + rotation_matrix
             item = (path, t)
             images.append(item)
             index += 1
@@ -52,15 +52,15 @@ def pil_loader(path):
 class LinemodDataset(Dataset):
     """ Linemod dataset."""
     
-    def __init__(self, root_dir, transform=None, target_transform=None):
+    def __init__(self, root, transform=None, target_transform=None):
     
-        classes, class_to_idx = self._find_classes(root_dir)
-        samples = make_dataset(root_dir, class_to_idx)
+        classes, class_to_idx = self._find_classes(root)
+        samples = make_dataset(root, class_to_idx)
         if len(samples) == 0:
-            raise (RuntimeError("Found 0 files in subfolder of " + root_dir + "\n"))
+            raise (RuntimeError("Found 0 files in subfolder of " + root + "\n"))
         
         self.loader = pil_loader
-        self.root_dir = root_dir
+        self.root = root
         self.transform = transform
         self.classes = classes
         self.class_to_idx = class_to_idx
@@ -111,7 +111,7 @@ class LinemodDataset(Dataset):
     def __repr__(self):
         fmt_str = 'Dataset ' + self.__class__.__name__ + '\n'
         fmt_str += '    Number of datapoints: {}\n'.format(self.__len__())
-        fmt_str += '    Root Location: {}\n'.format(self.root_dir)
+        fmt_str += '    Root Location: {}\n'.format(self.root)
         tmp = '    Transforms (if any): '
         fmt_str += '{0}{1}\n'.format(tmp, self.transform.__repr__().replace('\n', '\n' + ' ' * len(tmp)))
         tmp = '    Target Transforms (if any): '

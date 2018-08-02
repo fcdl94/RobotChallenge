@@ -1,11 +1,11 @@
 import torch.nn as nn
 import torch
 
+
 class ClassificationMetric(nn.Module):
     
-    def __init__(self, classes, threshold):
+    def __init__(self):
         super(ClassificationMetric, self).__init__()
-        self.classes = classes
     
     def forward(self, input, target):
         """ Input should be BS x C

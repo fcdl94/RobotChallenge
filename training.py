@@ -2,27 +2,16 @@ import torch
 import torch.optim as optim
 import torch.nn as nn
 import torch.utils.data
-import torchvision
-from torchvision import transforms, datasets
 from datetime import datetime
 import numpy as np
 import visdom
+from OBC.ClassificationMetric import ClassificationMetric
 
 # Training settings
-PATH_TO_DATASETS = '/home/lab2atpolito/FabioDatiSSD/ROD'
-BATCH_SIZE = 32
-TEST_BATCH_SIZE = 64
 EPOCHS = 60
 STEP = 40
 NO_CUDA = False
-IMAGE_CROP = 224
 LOG_INTERVAL = 10
-WORKERS = 8
-
-# image normalization
-IMAGENET_MEAN = [0.485, 0.456, 0.406]
-#IMAGENET_STD = [0.229, 0.224, 0.225]
-IMAGENET_STD = [1, 1, 1]
 
 # Initialize visualization tool
 vis = visdom.Visdom()
@@ -31,28 +20,14 @@ vis = visdom.Visdom()
 cuda = not NO_CUDA and torch.cuda.is_available()
 
 
-def train(model, folder, prefix, freeze=False, lr=0.001, momentum=0.9, epochs=EPOCHS, visdom_env="robotROD",
-          decay=10e-5, step=STEP, batch=BATCH_SIZE, cost_function_p=nn.CrossEntropyLoss):
+def train(model, train_loader, test_loader, prefix, freeze=False, lr=0.001, momentum=0.9, epochs=EPOCHS, visdom_env="robotROD",
+          decay=10e-5, step=STEP, batch=32, cost_function_p=nn.CrossEntropyLoss(), metric=ClassificationMetric()):
+    
     # Define visualization environment
     vis.env = visdom_env
-
-    # data pre-processing
-    workers = WORKERS if cuda else 0
-    data_transform = get_data_transform(True, False)
-
-    dataset = datasets.ImageFolder(root=folder + '/train', transform=data_transform)
-    train_loader = torch.utils.data.DataLoader(dataset, batch_size=batch, shuffle=True, num_workers=workers)
-
-    # Uncomment the code behind to test the data loader
-    # print_loaded_data(train_loader)
-    # plt.pause(2)
-
-    # Build the test loader
-    # (note that more complex data transforms can be used to provide better performances e.g. 10 crops)
-    data_transform = get_data_transform(False, False)
-
-    dataset = datasets.ImageFolder(root=folder + '/val', transform=data_transform)
-    test_loader = torch.utils.data.DataLoader(dataset, batch_size=TEST_BATCH_SIZE, shuffle=True, num_workers=workers)
+    
+    global BATCH_SIZE
+    BATCH_SIZE = batch
 
     # If feature extractor free all the network except fc
     if freeze:
@@ -67,7 +42,7 @@ def train(model, folder, prefix, freeze=False, lr=0.001, momentum=0.9, epochs=EP
     scheduler = optim.lr_scheduler.StepLR(optimizer, step)
 
     # set loss function
-    cost_function = cost_function_p()
+    cost_function = cost_function_p
 
     # prepare for training
     if cuda:
@@ -88,7 +63,7 @@ def train(model, folder, prefix, freeze=False, lr=0.001, momentum=0.9, epochs=EP
         print(str(epoch) + "-lr: " + str(optimizer.state_dict()["param_groups"][0]["lr"]))
 
         loss_epoch = train_epoch(model, epoch, train_loader, optimizer, cost_function, not freeze)
-        result = test_epoch(model, test_loader, cost_function)
+        result = test_epoch(model, test_loader, cost_function, metric)
 
         accuracies_test.append(result[0])
         losses_test.append(result[1])
@@ -142,26 +117,15 @@ def train(model, folder, prefix, freeze=False, lr=0.001, momentum=0.9, epochs=EP
     return best_accuracy
 
 
-def test(model, folder):
-    # Training steps:
-    # Preprocessing (cropping, hor-flipping, resizing) and get data
-    # Initialize data processing threads
-    workers = WORKERS if cuda else 0
-
-    # Build the test loader
-    # (note that more complex data transforms can be used to provide better performances e.g. 10 crops)
-    data_transform = get_data_transform(False, True)
-
-    dataset = datasets.ImageFolder(root=folder + '/val', transform=data_transform)
-    test_loader = torch.utils.data.DataLoader(dataset, batch_size=BATCH_SIZE, shuffle=True, num_workers=workers)
+def test(model, test_loader, cost_function_m, metric_m):
 
     # set loss function
-    cost_function = nn.CrossEntropyLoss()
+    cost_function = cost_function_m()
 
     if cuda:
         model = model.cuda()
 
-    result = test_epoch(model, test_loader, cost_function)
+    result = test_epoch(model, test_loader, cost_function, metric_m())
     print('Test \tTestLoss: {:.6f}\tAccuracyTest: {:.6f}'.format(
            result[1], result[0]))
 
@@ -216,7 +180,7 @@ def train_epoch(model, epoch, train_loader, optimizers, cost_function, bn=False)
     return losses / current
 
 
-def test_epoch(model, test_loader, cost_function):
+def test_epoch(model, test_loader, cost_function, metric):
     # Put the model in eval mode
     model.eval()
     torch.set_grad_enabled(False)
@@ -233,8 +197,7 @@ def test_epoch(model, test_loader, cost_function):
 
         # Update holders
         test_loss += cost_function(output, target).item()  # sum up batch loss
-        pred = torch.max(output, 1)[1]  # get the index of the max log-probability
-        correct += pred.eq(target.data.view_as(pred)).cpu().sum()  # Check if the prediction is correct
+        correct += metric(output, target)
 
     # Compute accuracy and loss
     total_loss = test_loss / len(test_loader.dataset)
@@ -244,37 +207,3 @@ def test_epoch(model, test_loader, cost_function):
 
     torch.set_grad_enabled(True)
     return results
-
-
-def get_data_transform(mirror, scaling):
-    # Create Data loader w.r.t. chosen transformations
-    if mirror:
-        if scaling:
-            data_transform = transforms.Compose([
-                transforms.RandomResizedCrop(IMAGE_CROP, scale=(0.8, 1.0)),
-                transforms.RandomHorizontalFlip(),
-                transforms.ToTensor(),
-                transforms.Normalize(mean=IMAGENET_MEAN, std=IMAGENET_STD)
-            ])
-        else:
-            data_transform = transforms.Compose([
-                transforms.Resize((IMAGE_CROP, IMAGE_CROP)),
-                transforms.RandomHorizontalFlip(),
-                transforms.ToTensor(),
-                transforms.Normalize(mean=IMAGENET_MEAN, std=IMAGENET_STD)
-            ])
-    else:
-        if scaling:
-            data_transform = transforms.Compose([
-                #transforms.Resize((IMAGE_CROP, IMAGE_CROP)),
-                transforms.RandomResizedCrop(IMAGE_CROP, scale=(0.8, 1.0)),
-                transforms.ToTensor(),
-                transforms.Normalize(mean=IMAGENET_MEAN, std=IMAGENET_STD)
-            ])
-        else:
-            data_transform = transforms.Compose([
-                transforms.Resize((IMAGE_CROP, IMAGE_CROP)),
-                transforms.ToTensor(),
-                transforms.Normalize(mean=IMAGENET_MEAN, std=IMAGENET_STD)
-            ])
-    return data_transform
