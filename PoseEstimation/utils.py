@@ -15,7 +15,7 @@ def rot_matrix_to_RPY(matrix):
 
 
 def rotation_equals(rot1, rot2, threshold):
-    if rot1.size() != rot2.size():
+    if rot1.size() == rot2.size():
         cor = torch.abs(rot1 - rot2).sum(-1) < threshold
         return cor
     else:

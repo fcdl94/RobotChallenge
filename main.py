@@ -50,7 +50,7 @@ if __name__ == '__main__':
         from PoseEstimation.LinemodDataset import LinemodDataset
         classes = 2 + 3
         cost_function = pel.PE3DLoss(2)
-        metric = pel.PEMetric(2, 5)
+        metric = pel.PEMetric(2, 0.1)  # 0.04 means nearly 5 degrees
         train_loader = dl.get_image_folder_loaders(args.folder, LinemodDataset, False, True, args.bs)
         test_loader = dl.get_image_folder_loaders(args.folder, LinemodDataset, False, False, args.bs)
     elif task == "Classification":

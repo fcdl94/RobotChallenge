@@ -35,13 +35,13 @@ class PEMetric(nn.Module):
             Target should be BS x 1+3 (class label + 3 (RPY) values)
         """
         class_input, rot_input = input[:, 0:self.classes], input[:, self.classes:]
-        class_target, rot_target = target[0], target[1:]
+        class_target, rot_target = target[:, 0].long(), target[:, 1:]
         
         pred = torch.max(class_input, 1)[1]
         correct_class = pred.eq(class_target.data.view_as(pred)).cpu()
         
-        correct_pose = rotation_equals(rot_input, torch.stack(rot_target).t().float(), self.threshold)
-        
-        correct = correct_class.eq(correct_pose).sum()  # to be correct both must be correct [1 and 1]
+        correct_pose = rotation_equals(rot_input, rot_target, self.threshold)
+
+        correct = (correct_class + correct_pose) == 2  # to be correct both must be correct [1 and 1]
         
         return correct
