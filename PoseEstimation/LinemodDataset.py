@@ -35,6 +35,7 @@ def make_dataset(dir, class_to_idx):
             path_rot = os.path.join(d, "rot" + str(index) + ".rot")
             rotation_matrix = linemod_rotation(path_rot)
             t = [class_to_idx[target]] + rotation_matrix
+            t = torch.FloatTensor(t)
             item = (path, t)
             images.append(item)
             index += 1

@@ -15,10 +15,10 @@ class PE3DLoss(nn.Module):
             Target should be BS x 1+3 (class label + 3 (RPY) values)
         """
         class_input, rot_input = input[:, 0:self.classes], input[:, self.classes:]
-        class_target, rot_target = target[0], target[1:]
+        class_target, rot_target = target[:, 0], target[:, 1:]
         
-        ce_loss = self.CrossEntropyLoss(class_input, class_target)
-        distance = self.PairwiseDistance(rot_input, torch.stack(rot_target).t().float())
+        ce_loss = self.CrossEntropyLoss(class_input, class_target.long())
+        distance = self.PairwiseDistance(rot_input, rot_target)
         final_loss = ce_loss + distance.mean()
         return final_loss
 
