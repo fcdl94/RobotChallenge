@@ -146,7 +146,6 @@ def train_epoch(model, epoch, train_loader, optimizers, cost_function, bn=False)
 
     # Init holders
     losses = 0
-    current = 0
 
     # Perform the training procedure
     for batch_idx, (data, target) in enumerate(train_loader):
@@ -172,12 +171,11 @@ def train_epoch(model, epoch, train_loader, optimizers, cost_function, bn=False)
         if batch_idx % LOG_INTERVAL == 0:
             print('Train Epoch: {} [{:4d}/{:4d} ({:2.0f}%)]\tAvgLoss: {:.6f}'.format(
                 epoch, batch_idx * len(data), len(train_loader.dataset),
-                       100. * batch_idx / len(train_loader), loss.item() / BATCH_SIZE))
+                       100. * batch_idx / len(train_loader), loss.item()))
 
         losses += loss.item()
-        current += 1
 
-    return losses / current
+    return losses / len(train_loader)
 
 
 def test_epoch(model, test_loader, cost_function, metric):
@@ -200,7 +198,7 @@ def test_epoch(model, test_loader, cost_function, metric):
         correct += metric(output, target)
 
     # Compute accuracy and loss
-    total_loss = test_loss / len(test_loader.dataset)
+    total_loss = test_loss / len(test_loader)
     accuracy = 100. * float(correct) / (len(test_loader.dataset))
 
     results = [accuracy, total_loss]
