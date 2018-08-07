@@ -30,15 +30,15 @@ def make_dataset(dir, class_to_idx):
         if not os.path.isdir(d):
             continue
         index = 0
-        while os.path.isfile(os.path.join(d, "color" + str(index) + ".jpg")):
-            path = os.path.join(d, "color" + str(index) + ".jpg")
-            path_rot = os.path.join(d, "rot" + str(index) + ".rot")
-            rotation_matrix = linemod_rotation(path_rot)
-            t = [class_to_idx[target]] + rotation_matrix
-            t = torch.FloatTensor(t)
-            item = (path, t)
-            images.append(item)
-            index += 1
+        for fname in os.listdir(d):
+            if "color" in fname:
+                path_rot = os.path.join(d, fname[:-3] + "rot")
+                rotation_matrix = linemod_rotation(path_rot)
+                t = [class_to_idx[target]] + rotation_matrix
+                t = torch.FloatTensor(t)
+                path = os.path.join(d, fname[:-3] + "jpg")
+                item = (path, t)
+                images.append(item)
 
     return images
 

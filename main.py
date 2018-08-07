@@ -54,8 +54,8 @@ if __name__ == '__main__':
         classes = CLASSES + 3
         cost_function = pel.PE3DLoss(2)
         metric = pel.PEMetric(2, 0.1)  # 0.04 means nearly 5 degrees
-        train_loader = dl.get_image_folder_loaders(args.folder, LinemodDataset, False, True, args.bs)
-        test_loader = dl.get_image_folder_loaders(args.folder, LinemodDataset, False, False, args.bs)
+        train_loader = dl.get_image_folder_loaders(args.folder + "/train", LinemodDataset, False, True, args.bs)
+        test_loader = dl.get_image_folder_loaders(args.folder + "/val", LinemodDataset, False, False, args.bs)
     elif task == "Classification":
         classes = 51
         cost_function = nn.CrossEntropyLoss()
