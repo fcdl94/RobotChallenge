@@ -20,8 +20,8 @@ vis = visdom.Visdom()
 cuda = not NO_CUDA and torch.cuda.is_available()
 
 
-def train(model, train_loader, test_loader, prefix, freeze=False, lr=0.001, momentum=0.9, epochs=EPOCHS, visdom_env="robotROD",
-          decay=10e-5, step=STEP, batch=32, cost_function_p=nn.CrossEntropyLoss(), metric=ClassificationMetric()):
+def train(model, train_loader, test_loader, prefix="checkpoint", freeze=False, lr=0.001, momentum=0.9, epochs=EPOCHS, visdom_env="robotROD",
+          decay=10e-5, step=STEP, batch=32, cost_function=nn.CrossEntropyLoss(), metric=ClassificationMetric()):
     
     # Define visualization environment
     vis.env = visdom_env
@@ -41,8 +41,7 @@ def train(model, train_loader, test_loader, prefix, freeze=False, lr=0.001, mome
     optimizer = optim.SGD(params_to_optim, lr=lr, momentum=momentum, weight_decay=decay)
     scheduler = optim.lr_scheduler.StepLR(optimizer, step)
 
-    # set loss function
-    cost_function = cost_function_p
+    # set loss function (it's a parameter as the metric function)
 
     # prepare for training
     if cuda:
@@ -62,7 +61,7 @@ def train(model, train_loader, test_loader, prefix, freeze=False, lr=0.001, mome
         scheduler.step()
         print(str(epoch) + "-lr: " + str(optimizer.state_dict()["param_groups"][0]["lr"]))
 
-        loss_epoch = train_epoch(model, epoch, train_loader, optimizer, cost_function, not freeze)
+        loss_epoch = train_epoch(model, epoch, train_loader, optimizer, cost_function)
         result = test_epoch(model, test_loader, cost_function, metric)
 
         accuracies_test.append(result[0])
@@ -117,15 +116,14 @@ def train(model, train_loader, test_loader, prefix, freeze=False, lr=0.001, mome
     return best_accuracy
 
 
-def test(model, test_loader, cost_function_m, metric_m):
+def test(model, test_loader, cost_function, metric):
 
-    # set loss function
-    cost_function = cost_function_m()
+    # set loss function in parameter as the metric
 
     if cuda:
         model = model.cuda()
 
-    result = test_epoch(model, test_loader, cost_function, metric_m())
+    result = test_epoch(model, test_loader, cost_function, metric)
     print('Test \tTestLoss: {:.6f}\tAccuracyTest: {:.6f}'.format(
            result[1], result[0]))
 
@@ -133,16 +131,11 @@ def test(model, test_loader, cost_function_m, metric_m):
 
 
 # Perform a single training epoch
-def train_epoch(model, epoch, train_loader, optimizers, cost_function, bn=False):
+def train_epoch(model, epoch, train_loader, optimizers, cost_function):
     # Set the model in training mode
     model.train()
 
     print("Starting time of Epoch " + str(epoch) + ": " + str(datetime.now().time()))
-    # If BN parameters must be frozen, freeze them
-    if not bn:
-        for m in model.modules():
-            if isinstance(m, nn.BatchNorm1d) or isinstance(m, nn.BatchNorm2d):
-                m.eval()
 
     # Init holders
     losses = 0
