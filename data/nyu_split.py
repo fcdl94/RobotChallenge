@@ -26,11 +26,11 @@ if __name__ == "__main__":
             os.mkdir(dest_dir_train)
 
             for i, file in enumerate(os.listdir(src_dir)):
-                if index % 2 == 0:
+                if index % 5 == 0:
                     
                     path_img = os.path.join(src_dir, file)
                 
-                    if (index+1) % 10 == 0:
+                    if (index) % 25 == 0:
                         # put into validation
                         dest_path_img = os.path.join(dest_dir_val,  file)
                     else:

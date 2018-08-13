@@ -10,7 +10,7 @@ from torchvision.datasets import ImageFolder
 task_list = ["PE", "SC", "OC"]
 folders = {
     "PE": '/home/fabio/robot_challenge/linemod',
-    "SC": '/home/fabio/robot_challenge/NYU',
+    "SC": '/home/fabio/robot_challenge/NYUlab/data/images',
     "OC": '/home/fabio/robot_challenge/rod/split1'
 }
 
