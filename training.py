@@ -37,11 +37,13 @@ def train(model, train_loader, test_loader, prefix="checkpoint", freeze=False, l
 
     params_to_optim = list(filter(lambda p: p.requires_grad, model.parameters()))
 
+    # Consider this as a sanity check
+    for name, par in model.named_parameters():
+        print(name + " requires_grad: " + str(par.requires_grad))
+    
     # set optimizer and scheduler
     optimizer = optim.SGD(params_to_optim, lr=lr, momentum=momentum, weight_decay=decay)
     scheduler = optim.lr_scheduler.StepLR(optimizer, step)
-
-    # set loss function (it's a parameter as the metric function)
 
     # prepare for training
     if cuda:
@@ -61,6 +63,7 @@ def train(model, train_loader, test_loader, prefix="checkpoint", freeze=False, l
         scheduler.step()
         print(str(epoch) + "-lr: " + str(optimizer.state_dict()["param_groups"][0]["lr"]))
 
+        # NOTE: loss function is a parameter as well as the metric function
         loss_epoch = train_epoch(model, epoch, train_loader, optimizer, cost_function)
         result = test_epoch(model, test_loader, cost_function, metric)
 
@@ -111,7 +114,7 @@ def train(model, train_loader, test_loader, prefix="checkpoint", freeze=False, l
                 'epoch': epoch,
                 'state_dict': model.state_dict(),
                 'optimizer': optimizer.state_dict()
-            }, prefix + ".pth")
+            }, "models/" + prefix + ".pth")
 
     return best_accuracy
 

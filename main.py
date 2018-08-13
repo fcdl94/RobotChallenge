@@ -21,7 +21,7 @@ if __name__ == '__main__':
                         help='Where to locate the imgs')
     parser.add_argument('--pretrained', type=str, default=None,
                         help='Whether to use a pretrained model.')
-    parser.add_argument('--prefix', type=str, default='./models',
+    parser.add_argument('--prefix', type=str, default='noName',
                         help='Where to store the checkpoints')
     parser.add_argument('--visdom', type=str, default="training",
                         help='Select the visdom environment.')
@@ -57,22 +57,22 @@ if __name__ == '__main__':
         classes = 15 + 3
         cost_function = pel.PE3DLoss(classes - 3)
         metric = pel.PEMetric(classes - 3, math.radians(5))
-        train_loader = dl.get_image_folder_loaders(folder + "/train", LinemodDataset, False, False, args.bs)
-        test_loader = dl.get_image_folder_loaders(folder + "/val", LinemodDataset, False, False, args.bs)
+        train_loader = dl.get_image_folder_loaders(folder + "/train", LinemodDataset, "NO", args.bs)
+        test_loader = dl.get_image_folder_loaders(folder + "/val", LinemodDataset, "NO", args.bs)
     elif task == "OC":
         classes = 51
         cost_function = nn.CrossEntropyLoss()
         metric = OBC.ClassificationMetric.ClassificationMetric()
         # Image folder for train and val
-        train_loader = dl.get_image_folder_loaders(folder + "/train", ImageFolder, False, True, args.bs)
-        test_loader = dl.get_image_folder_loaders(folder + "/val", ImageFolder, False, False, args.bs)
+        train_loader = dl.get_image_folder_loaders(folder + "/train", ImageFolder, "SC", args.bs)
+        test_loader = dl.get_image_folder_loaders(folder + "/val", ImageFolder, "NO", args.bs)
     elif task == "SC":
-        classes = 31
+        classes = 10
         cost_function = nn.CrossEntropyLoss()
         metric = OBC.ClassificationMetric.ClassificationMetric()
         # Image folder for train and val
-        train_loader = dl.get_image_folder_loaders(folder + "/train", ImageFolder, False, True, args.bs)
-        test_loader = dl.get_image_folder_loaders(folder + "/val", ImageFolder, False, False, args.bs)
+        train_loader = dl.get_image_folder_loaders(folder + "/train", ImageFolder, "TC", args.bs)
+        test_loader = dl.get_image_folder_loaders(folder + "/val", ImageFolder, "NO", args.bs)
     else:
         # never executed, needed only for remove warnings.
         raise(Exception("Error in parameters. It should be one between [SC,OC,PE]"))
