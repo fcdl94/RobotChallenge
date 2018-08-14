@@ -116,7 +116,7 @@ def train(model, train_loader, test_loader, prefix="checkpoint", freeze=False, l
                 'optimizer': optimizer.state_dict()
             }, "models/" + prefix + ".pth")
 
-    return best_accuracy
+    return [best_accuracy, result[0]]
 
 
 def test(model, test_loader, cost_function, metric):

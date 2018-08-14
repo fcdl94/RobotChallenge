@@ -22,11 +22,11 @@ if __name__ == '__main__':
     # NAMING-PARAMETERS
     parser.add_argument('--folder', type=str, default=None,
                         help='Where to locate the imgs')
-    parser.add_argument('--pretrained', type=str, default=None,
+    parser.add_argument('-p', '--pretrained', type=str, default=None,
                         help='Whether to use a pretrained model.')
     parser.add_argument('--prefix', type=str, default='noName',
                         help='Where to store the checkpoints')
-    parser.add_argument('--visdom', type=str, default="training",
+    parser.add_argument('-v', '--visdom', type=str, default="training",
                         help='Select the visdom environment.')
     # TRAINING PARAMETERS
     parser.add_argument('--lr', type=float, default=None,
@@ -44,12 +44,10 @@ if __name__ == '__main__':
     # SETTING PARAMETERS
     parser.add_argument('--frozen', type=int, default=0,
                         help='Whether to use fine tuning (0 - DEF) or feature extractor (1).')
-    parser.add_argument('--task', type=str, default='PE',
+    parser.add_argument('-t', '--task', type=str, default='PE',
                         help='Which is the task to run')
-    parser.add_argument('--network', type=str, default='resnet',
+    parser.add_argument('-n', '--network', type=str, default='resnet',
                         help='Which is the network to use')
-    parser.add_argument('--old', type=int, default=0,
-                        help="Old model")
 
     args = parser.parse_args()
     
@@ -62,7 +60,7 @@ if __name__ == '__main__':
     
     par_set = ps.get_parameter_set(args.set)
     step = args.step if args.step else par_set["step"]
-    batch = args.bs if args.bs else par_set["batch"]
+    batch = args.bs if args.bs else par_set["bs"]
     epochs = args.epochs if args.epochs else par_set["epochs"]
     lr = args.lr if args.lr else par_set["lr"]
     decay = args.decay if args.decay else par_set["decay"]
@@ -100,12 +98,11 @@ if __name__ == '__main__':
     if args.network == network_list[0]:
         model = OBC.networks.resnet18(classes, args.pretrained)
     elif args.network == network_list[1]:
-        model = pbnet.piggyback_net([51, 18, 10], args.pretrained, args.old)
+        model = pbnet.piggyback_net([51, 18, 10], args.pretrained)
         model.set_index(index)
     else:
         raise(Exception("Error in parameters. Network should be one between " + str(network_list)))
     
-    accuracy = 0
     if not TEST:
         accuracy = training.train(model, train_loader, test_loader, prefix=args.prefix, visdom_env=args.visdom,
                                   step=step, batch=batch, epochs=epochs, lr=lr, decay=decay,
@@ -113,4 +110,22 @@ if __name__ == '__main__':
     else:
         accuracy = training.test(model, test_loader, cost_function, metric)
 
-    print("Final accuracy = " + str(accuracy))
+    print("Saving results in " + args.out)
+    
+    out = open("RESULTS.txt", "a")
+    output = {
+        "task"  : args.task,
+        "net"   : args.network,
+        "epochs": epochs,
+        "lr"    : lr,
+        "step"  : step,
+        "decay" : decay,
+        "bs"    : batch,
+        "max_acc": accuracy[0],
+        "end_acc": accuracy[1]
+    }
+    print(str(output))
+    out.write(str(output))
+    print("Result written")
+    out.close()
+

@@ -236,7 +236,7 @@ def wide_resnet(model_classes, pretrained=None, frozen=False, imagenet_old=False
     return model
 
 
-def piggyback_net(model_classes, pretrained=None, imagenet_old=False, bn=False):
+def piggyback_net(model_classes, pretrained=None, bn=False):
     model = PiggybackNet(classes=model_classes)
     if pretrained:
         old_state = torch.load(pretrained)['state_dict']
@@ -244,10 +244,10 @@ def piggyback_net(model_classes, pretrained=None, imagenet_old=False, bn=False):
         state.update(old_state)
         model.load_state_dict(state, False)
 
-        if imagenet_old:
-            dict_fc = dict(model.fc.named_parameters())
-            dict_fc["0.weight"].data.copy_(old_state["fc.weight"].data)
-            dict_fc["0.bias"].data.copy_(old_state["fc.bias"].data)
+        # if imagenet_old:
+        #     dict_fc = dict(model.fc.named_parameters())
+        #     dict_fc["0.weight"].data.copy_(old_state["fc.weight"].data)
+        #     dict_fc["0.bias"].data.copy_(old_state["fc.bias"].data)
 
         if not bn:
             for m in model.modules():
