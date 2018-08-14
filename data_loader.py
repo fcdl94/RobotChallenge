@@ -28,7 +28,7 @@ def get_image_folder_loaders(folder, dataset, name, batch=BATCH_SIZE):
     return loader
 
 
-# DATA_TRANSFORMS = ["NO", "SC", "SM", "MI", "TC"]
+# DATA_TRANSFORMS = ["NO", "SC", "SM", "MI"]
 def get_data_transform(name):
     # Create Data loader w.r.t. chosen transformations
     if name == "NO":
@@ -39,7 +39,6 @@ def get_data_transform(name):
         ])
     elif name == "SC":  # scaling
         data_transform = transforms.Compose([
-            # transforms.Resize((IMAGE_CROP, IMAGE_CROP)),
             transforms.RandomResizedCrop(IMAGE_CROP, scale=(0.8, 1.0)),
             transforms.ToTensor(),
             transforms.Normalize(mean=IMAGENET_MEAN, std=IMAGENET_STD)
@@ -55,12 +54,6 @@ def get_data_transform(name):
         data_transform = transforms.Compose([
             transforms.Resize((IMAGE_CROP, IMAGE_CROP)),
             transforms.RandomHorizontalFlip(),
-            transforms.ToTensor(),
-            transforms.Normalize(mean=IMAGENET_MEAN, std=IMAGENET_STD)
-        ])
-    elif name == "TC":  # ten crops
-        data_transform = transforms.Compose([
-            transforms.TenCrop(IMAGE_CROP, True),
             transforms.ToTensor(),
             transforms.Normalize(mean=IMAGENET_MEAN, std=IMAGENET_STD)
         ])

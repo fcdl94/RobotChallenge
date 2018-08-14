@@ -23,26 +23,3 @@ def resnet18(fc_classes=1000, pretrained=None):
         model.fc = nn.Linear(num_ftrs, fc_classes)
     
     return model
-
-
-def load_pretrained(model, state_dict):
-    dict_model = model.state_dict()
-    for key in state_dict.keys():
-        if "bn" in key:
-            if "weight" in key:
-                dict_model[key[:-6] + "bn_source.weight"].data.copy_(state_dict[key].data)
-                dict_model[key[:-6] + "bn_target.weight"].data.copy_(state_dict[key].data)
-            elif "bias" in key:
-                dict_model[key[:-4] + "bn_source.bias"].data.copy_(state_dict[key].data)
-                dict_model[key[:-4] + "bn_target.bias"].data.copy_(state_dict[key].data)
-        elif 'downsample' in key:
-            if "0.weight" in key or "0.bias" in key:
-                dict_model[key].data.copy_(state_dict[key].data)
-            elif "1.weight" in key:
-                dict_model[key[:-6] + "bn_source.weight"].data.copy_(state_dict[key].data)
-                dict_model[key[:-6] + "bn_target.weight"].data.copy_(state_dict[key].data)
-            elif "1.bias" in key:
-                dict_model[key[:-4] + "bn_source.bias"].data.copy_(state_dict[key].data)
-                dict_model[key[:-4] + "bn_target.bias"].data.copy_(state_dict[key].data)
-        else:
-            dict_model[key].data.copy_(state_dict[key].data)
