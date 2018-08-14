@@ -4,14 +4,16 @@ set_dict = {
         "lr": 0.001,
         "step": 40,
         "decay": 0.00001,
-        "bs": 64
+        "bs": 64,
+        "adamlr": 0.0001
         },
     "rod": {
         "epochs": 30,
         "lr": 0.005,
         "step": 20,
         "decay": 0.00005,
-        "bs": 32
+        "bs": 32,
+        "adamlr": 0.0001
     }
 }
 

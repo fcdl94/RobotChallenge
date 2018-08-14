@@ -31,6 +31,8 @@ if __name__ == '__main__':
     # TRAINING PARAMETERS
     parser.add_argument('--lr', type=float, default=None,
                         help='The learning rate to apply into training')
+    parser.add_argument('--adamlr', type=float, default=None,
+                        help='The ADAM learning rate to apply into training if piggyback')
     parser.add_argument('--decay', type=float, default=None,
                         help='The learning rate to apply into training')
     parser.add_argument('--bs', type=int, default=None,
@@ -63,6 +65,7 @@ if __name__ == '__main__':
     batch = args.bs if args.bs else par_set["bs"]
     epochs = args.epochs if args.epochs else par_set["epochs"]
     lr = args.lr if args.lr else par_set["lr"]
+    adamlr = args.adamlr if args.adamlr else par_set["adamlr"]
     decay = args.decay if args.decay else par_set["decay"]
     
     if task == "OC":
@@ -104,28 +107,28 @@ if __name__ == '__main__':
         raise(Exception("Error in parameters. Network should be one between " + str(network_list)))
     
     if not TEST:
-        accuracy = training.train(model, train_loader, test_loader, prefix=args.prefix, visdom_env=args.visdom,
+        accuracy = training.train(args.network, model, train_loader, test_loader, prefix=args.prefix, visdom_env=args.visdom,
                                   step=step, batch=batch, epochs=epochs, lr=lr, decay=decay,
                                   freeze=args.frozen, cost_function=cost_function, metric=metric)
     else:
         accuracy = training.test(model, test_loader, cost_function, metric)
 
-    print("Saving results in " + args.out)
+    print("Saving results in RESULTS.txt")
     
     out = open("RESULTS.txt", "a")
     output = {
-        "task"  : args.task,
-        "net"   : args.network,
-        "epochs": epochs,
-        "lr"    : lr,
-        "step"  : step,
-        "decay" : decay,
-        "bs"    : batch,
+        "task"   : args.task,
+        "net"    : args.network,
+        "epochs" : epochs,
+        "lr"     : lr,
+        "step"   : step,
+        "decay"  : decay,
+        "bs"     : batch,
         "max_acc": accuracy[0],
         "end_acc": accuracy[1]
     }
     print(str(output))
-    out.write(str(output))
+    out.write(str(output) + "\n")
     print("Result written")
     out.close()
 

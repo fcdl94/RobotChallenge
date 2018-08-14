@@ -6,6 +6,7 @@ from datetime import datetime
 import numpy as np
 import visdom
 from OBC.ClassificationMetric import ClassificationMetric
+from Piggyback.multiple_optim import MultipleOptimizer
 
 # Training settings
 EPOCHS = 60
@@ -20,8 +21,9 @@ vis = visdom.Visdom()
 cuda = not NO_CUDA and torch.cuda.is_available()
 
 
-def train(model, train_loader, test_loader, prefix="checkpoint", freeze=False, lr=0.001, momentum=0.9, epochs=EPOCHS, visdom_env="robotROD",
-          decay=10e-5, step=STEP, batch=32, cost_function=nn.CrossEntropyLoss(), metric=ClassificationMetric()):
+def train(network, model, train_loader, test_loader, freeze=False, prefix="checkpoint", visdom_env="robotROD",
+          epochs=EPOCHS, step=STEP, lr=0.001, momentum=0.9, decay=10e-5, batch=32, adamlr=0.0001,
+          cost_function=nn.CrossEntropyLoss(), metric=ClassificationMetric()):
     
     # Define visualization environment
     vis.env = visdom_env
@@ -34,17 +36,35 @@ def train(model, train_loader, test_loader, prefix="checkpoint", freeze=False, l
         for name, par in model.named_parameters():
             if "fc" not in name:
                 par.requires_grad = False
-
-    params_to_optim = list(filter(lambda p: p.requires_grad, model.parameters()))
-
+    
+    # Set optimizer and scheduler
+    if not network == "piggyback":
+        params_to_optim = list(filter(lambda p: p.requires_grad, model.parameters()))
+        # set optimizer and scheduler
+        optimizer = optim.SGD(params_to_optim, lr=lr, momentum=momentum, weight_decay=decay)
+        scheduler = optim.lr_scheduler.StepLR(optimizer, step)
+    else:
+        ignored_params = list(map(id, model.fc.parameters()))
+        base_params = list(filter(lambda p: (id(p) not in ignored_params) and p.requires_grad, model.parameters()))
+        fc_params = list(filter(lambda p: p.requires_grad, model.fc.parameters()))
+        # set optimizer
+        if len(base_params) == 0:
+            optimizer_b = optim.SGD(fc_params, lr=lr, momentum=momentum, weight_decay=decay)
+            scheduler_b = optim.lr_scheduler.StepLR(optimizer_b, step)
+            scheduler = MultipleOptimizer(scheduler_b)
+            optimizer = MultipleOptimizer(optimizer_b)
+        else:
+            optimizer_a = optim.Adam(base_params, lr=adamlr, weight_decay=decay)
+            optimizer_b = optim.SGD(fc_params, lr=lr, momentum=momentum, weight_decay=decay)
+            scheduler_a = optim.lr_scheduler.StepLR(optimizer_a, step)
+            scheduler_b = optim.lr_scheduler.StepLR(optimizer_b, step)
+            scheduler = MultipleOptimizer(scheduler_a, scheduler_b)
+            optimizer = MultipleOptimizer(optimizer_a, optimizer_b)
+    
     # Consider this as a sanity check
     for name, par in model.named_parameters():
         print(name + " requires_grad: " + str(par.requires_grad))
-    
-    # set optimizer and scheduler
-    optimizer = optim.SGD(params_to_optim, lr=lr, momentum=momentum, weight_decay=decay)
-    scheduler = optim.lr_scheduler.StepLR(optimizer, step)
-
+        
     # prepare for training
     if cuda:
         model = model.cuda()
