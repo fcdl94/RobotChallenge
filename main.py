@@ -82,6 +82,7 @@ if __name__ == '__main__':
         classes = 15 + 4  # 15 classes and 4 quaternion values
         cost_function = pel.PE3DLoss(classes - 4)
         metric = pel.PEMetric(classes - 4)
+        # revert here. train / val not sample
         train_loader = dl.get_image_folder_loaders(folder + "/train", LinemodDataset, "NO", batch)
         test_loader = dl.get_image_folder_loaders(folder + "/val", LinemodDataset, "NO", batch)
         index = 1
@@ -101,6 +102,7 @@ if __name__ == '__main__':
     if args.network == network_list[0]:
         model = OBC.networks.resnet18(classes, args.pretrained)
     elif args.network == network_list[1]:
+        # revert here. 19 not 6
         model = pbnet.piggyback_net([51, 19, 10], args.pretrained)
         model.set_index(index)
     else:

@@ -68,7 +68,7 @@ def rot_matrix_to_RPY(matrix):
 
 def rotation_equals(rot1, rot2, threshold):
     cor = geodesic_distance(rot1, rot2) < threshold
-    return cor
+    return cor.squeeze()
 
 
 

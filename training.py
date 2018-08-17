@@ -81,8 +81,7 @@ def train(network, model, train_loader, test_loader, freeze=False, prefix="check
     for epoch in range(1, epochs + 1):
 
         scheduler.step()
-        print(str(epoch) + "-lr: " + str(optimizer.state_dict()["param_groups"][0]["lr"]))
-
+    
         # NOTE: loss function is a parameter as well as the metric function
         loss_epoch = train_epoch(model, epoch, train_loader, optimizer, cost_function)
         result = test_epoch(model, test_loader, cost_function, metric)
