@@ -1,5 +1,57 @@
 import math
 import torch
+import numpy as np
+from math import sqrt
+
+
+def quaternion_from_matrix(matrix):
+    """Initialise from matrix representation
+    Create a Quaternion by specifying the 3x3 rotation matrix
+    (as a numpy array) from which the quaternion's rotation should be created.
+    """
+    try:
+        shape = matrix.shape
+    except AttributeError:
+        raise TypeError("Invalid matrix type: Input must be a 3x3 numpy matrix")
+
+    if shape == (3, 3):
+        R = matrix
+    else:
+        raise ValueError("Invalid matrix shape: Input must be a 3x3 or 4x4 numpy array or matrix")
+
+    # Check matrix properties
+    if not np.allclose(np.dot(R, R.conj().transpose()), np.eye(3), atol=1e-5):
+        raise ValueError("Matrix must be orthogonal, i.e. its transpose should be its inverse: "
+                         + str(np.dot(R, R.conj().transpose())))
+    if not np.isclose(np.linalg.det(R), 1.0):
+        raise ValueError("Matrix must be special orthogonal i.e. its determinant must be +1.0")
+
+    m = matrix.conj().transpose()  # This method assumes row-vector and post-multiplication of that vector
+    if m[2, 2] < 0:
+        if m[0, 0] > m[1, 1]:
+            t = 1 + m[0, 0] - m[1, 1] - m[2, 2]
+            q = [m[1, 2]-m[2, 1],  t,  m[0, 1]+m[1, 0],  m[2, 0]+m[0, 2]]
+        else:
+            t = 1 - m[0, 0] + m[1, 1] - m[2, 2]
+            q = [m[2, 0]-m[0, 2],  m[0, 1]+m[1, 0],  t,  m[1, 2]+m[2, 1]]
+    else:
+        if m[0, 0] < -m[1, 1]:
+            t = 1 - m[0, 0] - m[1, 1] + m[2, 2]
+            q = [m[0, 1]-m[1, 0],  m[2, 0]+m[0, 2],  m[1, 2]+m[2, 1],  t]
+        else:
+            t = 1 + m[0, 0] + m[1, 1] + m[2, 2]
+            q = [t,  m[1, 2]-m[2, 1],  m[2, 0]-m[0, 2],  m[0, 1]-m[1, 0]]
+
+    q = np.array(q)
+    q *= 0.5 / sqrt(t)
+    # Normalize again, there can be some numerical errors
+    q = q / np.linalg.norm(q)
+    return q
+
+
+def geodesic_distance(q1, q2):
+    d = 2*torch.acos(torch.abs(torch.bmm(q1.view(q1.size()[0], 1, 4), q2.view(q2.size()[0], 4, 1))))
+    return d
 
 
 def rot_matrix_to_RPY(matrix):
@@ -15,11 +67,9 @@ def rot_matrix_to_RPY(matrix):
 
 
 def rotation_equals(rot1, rot2, threshold):
-    if rot1.size() == rot2.size():
-        cor = torch.abs(rot1 - rot2).sum(-1) < threshold
-        return cor
-    else:
-        return 0
+    cor = geodesic_distance(rot1, rot2) < threshold
+    return cor
+
 
 
 def sanity_check_for_rot_matrix_to_RPY():

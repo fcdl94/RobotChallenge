@@ -3,10 +3,6 @@ import math
 import torch
 import DIAL.utils
 
-# TODO modificarlo in modo che non abbia da fare i set index ma direttamente modificando la funzione chiamabile tale che
-# modifichi la forward. Controllare non sia una follia, ma penso di no.
-
-
 model_urls = {
     'resnet18': 'https://download.pytorch.org/models/resnet18-5c106cde.pth',
     'RODS1': '/home/fabio/robot_challenge/RobotChallenge/RODx_models/S1LR23BS64t1.pth',

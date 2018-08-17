@@ -4,22 +4,20 @@ import numpy as np
 import sys
 import os
 from PIL import Image
-from PoseEstimation.utils import rot_matrix_to_RPY
+from PoseEstimation.utils import quaternion_from_matrix
 
 
 def linemod_rotation(fname):
     """
-    read a 3x3 rotation and 3x1 translation.
-
-    can be done with np.loadtxt, but this is way faster
+    read a 3x3 rotation and trasform it into quaternion
     """
     R = open(fname)
     R.readline()  # discard first line
     R = np.float32(R.read().split()).reshape(3, 3)  # save the matrix
     
-    R = rot_matrix_to_RPY(R)
+    q = quaternion_from_matrix(R)
     
-    return R
+    return q
 
 
 def make_dataset(dir, class_to_idx):
@@ -31,11 +29,13 @@ def make_dataset(dir, class_to_idx):
             continue
         index = 0
         for fname in os.listdir(d):
-            if "color" in fname:
+            if "jpg" in fname:
                 path_rot = os.path.join(d, fname[:-3] + "rot")
-                rotation_matrix = linemod_rotation(path_rot)
-                t = [class_to_idx[target]] + rotation_matrix
+                quaternion = linemod_rotation(path_rot)
+                t = [class_to_idx[target]] + quaternion.tolist()
+                # print(quaternion, end='\t')
                 t = torch.FloatTensor(t)
+                # print(t)
                 path = os.path.join(d, fname[:-3] + "jpg")
                 item = (path, t)
                 images.append(item)
@@ -77,9 +77,9 @@ class LinemodDataset(Dataset):
         Args:
             index (int): Index
         Returns:
-            tuple: (sample, target, rot_matrix) where:
-                target is class_index of the target class
-                rot_matrix is the rotational matrix of the object
+            tuple: (sample, target) where:
+                target is class_index of the target class plus the associated quaternion
+                
         """
         path, target = self.samples[index]
         sample = self.loader(path)
