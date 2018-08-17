@@ -4,7 +4,7 @@ import numpy as np
 from math import sqrt
 
 
-def quaternion_from_matrix(matrix):
+def quaternion_from_matrix(matrix, row=True):
     """Initialise from matrix representation
     Create a Quaternion by specifying the 3x3 rotation matrix
     (as a numpy array) from which the quaternion's rotation should be created.
@@ -26,7 +26,12 @@ def quaternion_from_matrix(matrix):
     if not np.isclose(np.linalg.det(R), 1.0):
         raise ValueError("Matrix must be special orthogonal i.e. its determinant must be +1.0")
 
-    m = matrix.conj().transpose()  # This method assumes row-vector and post-multiplication of that vector
+    # This method assumes row-vector and post-multiplication of that vector
+    if row:
+        m = matrix
+    else:
+        m = matrix.conj().transpose()
+    
     if m[2, 2] < 0:
         if m[0, 0] > m[1, 1]:
             t = 1 + m[0, 0] - m[1, 1] - m[2, 2]
@@ -44,7 +49,7 @@ def quaternion_from_matrix(matrix):
 
     q = np.array(q)
     q *= 0.5 / sqrt(t)
-    # Normalize again, there can be some numerical errors
+    # Normalize again, there can be some small numerical errors
     q = q / np.linalg.norm(q)
     return q
 
@@ -74,7 +79,6 @@ def rotation_equals(rot1, rot2, threshold):
 
 def sanity_check_for_rot_matrix_to_RPY():
     # Sanity check for function to compute RPY
-    
     import math
     import numpy as np
     
