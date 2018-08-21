@@ -19,7 +19,7 @@ if __name__ == '__main__':
         print(line.strip())
 
     source_path = path + "/original"
-    dest_path = path + "/split" + str(args.index)
+    dest_path = path + "/split_d" + str(args.index)
     if not os.path.exists(dest_path):
         os.mkdir(dest_path)
         os.mkdir(dest_path + "/val")

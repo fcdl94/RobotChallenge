@@ -13,7 +13,7 @@ IMAGENET_MEAN = [0.485, 0.456, 0.406]
 IMAGENET_STD = [1, 1, 1]
 
 
-def get_image_folder_loaders(folder, dataset, name, batch=BATCH_SIZE):
+def get_image_folder_loaders(folder, dataset, name, batch=BATCH_SIZE, rgb=True, depth=False):
     # Check for CUDA usage
     cuda = not NO_CUDA and torch.cuda.is_available()
     
@@ -22,7 +22,7 @@ def get_image_folder_loaders(folder, dataset, name, batch=BATCH_SIZE):
     
     data_transform = get_data_transform(name)
     # Build the training loader
-    dataset = dataset(root=folder, transform=data_transform)
+    dataset = dataset(root=folder, transform=data_transform, rgb=rgb, depth=depth)
     loader = torch.utils.data.DataLoader(dataset, batch_size=batch, shuffle=True, num_workers=workers)
 
     return loader

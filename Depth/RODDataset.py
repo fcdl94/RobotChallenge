@@ -8,7 +8,6 @@ from PoseEstimation.utils import rot_matrix_to_RPY
 
 
 def make_dataset(dir, class_to_idx):
-    # todo modify this to load RGB or D or RGBD
     images = []
     dir = os.path.expanduser(dir)
     for target in sorted(class_to_idx.keys()):
@@ -18,9 +17,10 @@ def make_dataset(dir, class_to_idx):
         for fname in os.listdir(d):
             if "_crop" in fname: # per ROD _crop.png e _depthcrop.png
                 path_rgb = os.path.join(d, fname)
-                path_depth = os.path.join(d, fname[:-8] + "_depthcrop.png")
-                item = (path_rgb, path_depth, [class_to_idx[target]])
-                images.append(item)
+                path_depth = os.path.join(d, fname[:-8] + "depthcrop.png")
+                if os.path.isfile(path_rgb) and os.path.isfile(path_depth):
+                    item = ((path_rgb, path_depth), class_to_idx[target] )
+                    images.append(item)
     
     return images
 
@@ -32,12 +32,11 @@ def pil_loader(path):
         return img.convert('RGB')
 
 
-class DepthDataset(Dataset):
+class RODDataset(Dataset):
     """ Dataset to load both RGB and D images."""
     
-    def __init__(self, root, transform=None, target_transform=None):
+    def __init__(self, root, transform=None, target_transform=None, rgb=True, depth=False):
         
-        # todo change parameters
         classes, class_to_idx = self._find_classes(root)
         samples = make_dataset(root, class_to_idx)
         if len(samples) == 0:
@@ -51,24 +50,42 @@ class DepthDataset(Dataset):
         self.samples = samples
         self.targets = [s[1] for s in samples]
         self.target_transform = target_transform
+        self.rgb = rgb
+        self.depth = depth
+        if not rgb and not depth:
+            raise(Exception("A value between rgb and depth must be True. Change the parameters and try again."))
     
     def __len__(self):
         return len(self.samples)
     
     def __getitem__(self, index):
-        # todo change code to adapt to RGBD
         """
         Args:
             index (int): Index
         Returns:
-            tuple: (sample, target, rot_matrix) where:
+            tuple: (sample, target) where:
+                sample contains the image (RGB or D or RGB-D)
                 target is class_index of the target class
-                rot_matrix is the rotational matrix of the object
         """
         path, target = self.samples[index]
-        sample = self.loader(path)
-        if self.transform is not None:
-            sample = self.transform(sample)
+        
+        if self.rgb:
+            sample_rgb = self.loader(path[0])
+            if self.transform is not None:
+                sample_rgb = self.transform(sample_rgb)
+                
+        if self.depth:
+            sample_depth = self.loader(path[1])
+            if self.transform is not None:
+                sample_depth = self.transform(sample_depth)
+        
+        if self.rgb and self.depth:
+            sample = (sample_rgb, sample_depth)
+        elif self.rgb:
+            sample = sample_rgb
+        else:
+            sample = sample_depth
+        
         if self.target_transform is not None:
             target = self.target_transform(target)
         

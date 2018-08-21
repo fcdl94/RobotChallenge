@@ -8,6 +8,7 @@ import OBC.ClassificationMetric
 from torchvision.datasets import ImageFolder
 import par_sets as ps
 import Piggyback.networks as pbnet
+from Depth.RODDataset import RODDataset
 
 task_list = ["OC", "PE", "SC"]
 folders = {
@@ -73,8 +74,8 @@ if __name__ == '__main__':
         cost_function = nn.CrossEntropyLoss()
         metric = OBC.ClassificationMetric.ClassificationMetric()
         # Image folder for train and val
-        train_loader = dl.get_image_folder_loaders(folder + "/train", ImageFolder, "SM", batch)
-        test_loader = dl.get_image_folder_loaders(folder + "/val", ImageFolder, "NO", batch)
+        train_loader = dl.get_image_folder_loaders(folder + "/train", RODDataset, "SM", batch)
+        test_loader = dl.get_image_folder_loaders(folder + "/val", RODDataset, "NO", batch)
         index = 0
     elif task == "PE":
         import PoseEstimation.PELoss as pel
