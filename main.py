@@ -85,8 +85,8 @@ if __name__ == '__main__':
     elif task == "PE":
         import PoseEstimation.PELoss as pel
         from PoseEstimation.LinemodDataset import LinemodDataset
-        # todo classes = 15 + 3
-        classes = 2 + 3
+        classes = 15 + 3
+        # classes = 2 + 3
         cost_function = pel.PE3DLoss(classes - 3)
         metric = pel.PEMetric(classes - 3, math.radians(5))
         train_loader = dl.get_image_folder_loaders(folder + "/train", LinemodDataset, "NO", batch, rgb, depth)
