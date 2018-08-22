@@ -29,16 +29,20 @@ def make_dataset(dir, class_to_idx):
         d = os.path.join(dir, target)
         if not os.path.isdir(d):
             continue
-        index = 0
         for fname in os.listdir(d):
-            if "color" in fname:
-                path_rot = os.path.join(d, fname[:-3] + "rot")
+            if "rot" in fname:
+                path_rot = os.path.join(d, fname)
                 rotation_matrix = linemod_rotation(path_rot)
                 t = [class_to_idx[target]] + rotation_matrix
                 t = torch.FloatTensor(t)
-                path = os.path.join(d, fname[:-3] + "jpg")
-                item = (path, t)
-                images.append(item)
+
+                index = int(fname[3:-4])
+                path_rgb = os.path.join(d, "color{:0>4d}.png".format(index))
+                path_depth = os.path.join(d, "depth{:0>4d}.png".format(index))
+
+                if os.path.isfile(path_rgb) and os.path.isfile(path_depth):
+                    item = ((path_rgb, path_depth), t)
+                    images.append(item)
 
     return images
 
@@ -53,7 +57,7 @@ def pil_loader(path):
 class LinemodDataset(Dataset):
     """ Linemod dataset."""
     
-    def __init__(self, root, transform=None, target_transform=None):
+    def __init__(self, root, transform=None, target_transform=None, rgb=True, depth=False):
     
         classes, class_to_idx = self._find_classes(root)
         samples = make_dataset(root, class_to_idx)
@@ -68,7 +72,11 @@ class LinemodDataset(Dataset):
         self.samples = samples
         self.targets = [s[1] for s in samples]
         self.target_transform = target_transform
-        
+        self.rgb = rgb
+        self.depth = depth
+        if not rgb and not depth:
+            raise (Exception("A value between rgb and depth must be True. Change the parameters and try again."))
+
     def __len__(self):
         return len(self.samples)
     
@@ -82,14 +90,29 @@ class LinemodDataset(Dataset):
                 rot_matrix is the rotational matrix of the object
         """
         path, target = self.samples[index]
-        sample = self.loader(path)
-        if self.transform is not None:
-            sample = self.transform(sample)
+
+        if self.rgb:
+            sample_rgb = self.loader(path[0])
+            if self.transform is not None:
+                sample_rgb = self.transform(sample_rgb)
+
+        if self.depth:
+            sample_depth = self.loader(path[1])
+            if self.transform is not None:
+                sample_depth = self.transform(sample_depth)
+
+        if self.rgb and self.depth:
+            sample = (sample_rgb, sample_depth)
+        elif self.rgb:
+            sample = sample_rgb
+        else:
+            sample = sample_depth
+
         if self.target_transform is not None:
             target = self.target_transform(target)
-    
-        return sample, target
 
+        return sample, target
+    
     def _find_classes(self, dir):
         """
         Finds the class folders in a dataset.

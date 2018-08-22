@@ -11,8 +11,8 @@ if __name__ == "__main__":
     args = parser.parse_args()
     path = args.path
 
-    os.mkdir(path + "/vald")
-    os.mkdir(path + "/traind")
+    os.mkdir(path + "/val")
+    os.mkdir(path + "/train")
     
     for classname in sorted(os.listdir(path)):
         if not "train" == classname and not "val" == classname:

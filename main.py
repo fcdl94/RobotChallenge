@@ -51,6 +51,8 @@ if __name__ == '__main__':
                         help='Which is the task to run')
     parser.add_argument('-n', '--network', type=str, default='resnet',
                         help='Which is the network to use')
+    parser.add_argument("--depth", type=int, default=0,
+                        help="if this is true, depth will be used.")
 
     args = parser.parse_args()
     
@@ -60,6 +62,9 @@ if __name__ == '__main__':
         raise(Exception("Please be sure to use available task"))
         
     folder = args.folder if args.folder else folders[task]
+    
+    depth = args.depth
+    rgb = not args.depth
     
     par_set = ps.get_parameter_set(args.set)
     step = args.step if args.step else par_set["step"]
@@ -74,25 +79,26 @@ if __name__ == '__main__':
         cost_function = nn.CrossEntropyLoss()
         metric = OBC.ClassificationMetric.ClassificationMetric()
         # Image folder for train and val
-        train_loader = dl.get_image_folder_loaders(folder + "/train", RODDataset, "SM", batch)
-        test_loader = dl.get_image_folder_loaders(folder + "/val", RODDataset, "NO", batch)
+        train_loader = dl.get_image_folder_loaders(folder + "/train", RODDataset, "SM", batch, rgb, depth)
+        test_loader = dl.get_image_folder_loaders(folder + "/val", RODDataset, "NO", batch, rgb, depth)
         index = 0
     elif task == "PE":
         import PoseEstimation.PELoss as pel
         from PoseEstimation.LinemodDataset import LinemodDataset
-        classes = 15 + 3
+        # todo classes = 15 + 3
+        classes = 2 + 3
         cost_function = pel.PE3DLoss(classes - 3)
         metric = pel.PEMetric(classes - 3, math.radians(5))
-        train_loader = dl.get_image_folder_loaders(folder + "/train", LinemodDataset, "NO", batch)
-        test_loader = dl.get_image_folder_loaders(folder + "/val", LinemodDataset, "NO", batch)
+        train_loader = dl.get_image_folder_loaders(folder + "/train", LinemodDataset, "NO", batch, rgb, depth)
+        test_loader = dl.get_image_folder_loaders(folder + "/val", LinemodDataset, "NO", batch, rgb, depth)
         index = 1
     elif task == "SC":
         classes = 10
         cost_function = nn.CrossEntropyLoss()
         metric = OBC.ClassificationMetric.ClassificationMetric()
         # Image folder for train and val
-        train_loader = dl.get_image_folder_loaders(folder + "/train", ImageFolder, "SM", batch)
-        test_loader = dl.get_image_folder_loaders(folder + "/val", ImageFolder, "NO", batch)
+        train_loader = dl.get_image_folder_loaders(folder + "/train", ImageFolder, "SM", batch, rgb, depth)
+        test_loader = dl.get_image_folder_loaders(folder + "/val", ImageFolder, "NO", batch, rgb, depth)
         index = 2
     else:
         # never executed, needed only for remove warnings.
@@ -126,7 +132,8 @@ if __name__ == '__main__':
         "decay"  : decay,
         "bs"     : batch,
         "max_acc": accuracy[0],
-        "end_acc": accuracy[1]
+        "end_acc": accuracy[1],
+        "depth"  : depth
     }
     print(str(output))
     out.write(str(output) + "\n")
