@@ -8,12 +8,12 @@ import OBC.ClassificationMetric
 from torchvision.datasets import ImageFolder
 import par_sets as ps
 import Piggyback.networks as pbnet
-from Depth.RODDataset import RODDataset
+
 
 task_list = ["OC", "PE", "SC"]
 folders = {
     "PE": '/home/fabio/robot_challenge/linemod',
-    "SC": '/home/fabio/robot_challenge/NYUlab/data/images',
+    "SC": '/home/fabio/robot_challenge/NYUlab',
     "OC": '/home/fabio/robot_challenge/rod/split1'
 }
 network_list = ["resnet", "piggyback"]
@@ -75,11 +75,12 @@ if __name__ == '__main__':
     decay = args.decay if args.decay else par_set["decay"]
     
     if task == "OC":
+        from Depth.RODDataset import RODDataset
         classes = 51
         cost_function = nn.CrossEntropyLoss()
         metric = OBC.ClassificationMetric.ClassificationMetric()
         # Image folder for train and val
-        train_loader = dl.get_image_folder_loaders(folder + "/train", RODDataset, "SM", batch, rgb, depth)
+        train_loader = dl.get_image_folder_loaders(folder + "/train", RODDataset, "SC", batch, rgb, depth)
         test_loader = dl.get_image_folder_loaders(folder + "/val", RODDataset, "NO", batch, rgb, depth)
         index = 0
     elif task == "PE":
@@ -93,12 +94,13 @@ if __name__ == '__main__':
         test_loader = dl.get_image_folder_loaders(folder + "/val", LinemodDataset, "NO", batch, rgb, depth)
         index = 1
     elif task == "SC":
+        from Depth.NYUDataset import NYUDataset
         classes = 10
         cost_function = nn.CrossEntropyLoss()
         metric = OBC.ClassificationMetric.ClassificationMetric()
         # Image folder for train and val
-        train_loader = dl.get_image_folder_loaders(folder + "/train", ImageFolder, "SM", batch, rgb, depth)
-        test_loader = dl.get_image_folder_loaders(folder + "/val", ImageFolder, "NO", batch, rgb, depth)
+        train_loader = dl.get_image_folder_loaders(folder + "/train", NYUDataset, "SM", batch, rgb, depth)
+        test_loader = dl.get_image_folder_loaders(folder + "/val", NYUDataset, "NO", batch, rgb, depth)
         index = 2
     else:
         # never executed, needed only for remove warnings.

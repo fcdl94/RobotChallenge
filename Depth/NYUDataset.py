@@ -32,7 +32,7 @@ def pil_loader(path):
         return img.convert('RGB')
 
 
-class RODDataset(Dataset):
+class NYUDataset(Dataset):
     """ Dataset to load both RGB and D images."""
     
     def __init__(self, root, transform=None, target_transform=None, rgb=True, depth=False):

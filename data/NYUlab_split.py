@@ -23,13 +23,12 @@ if __name__ == "__main__":
         # scenes.txt that is a list containing the scene pf the image (ordered)
         # train.txt that is the list of training samples (as number)
     parser = argparse.ArgumentParser(description='Script to split NYU')
-    parser.add_argument('--path', type=str, default="/home/fabio/robot_challenge/NYUlab/data",
+    parser.add_argument('--path', type=str, default="/home/fabio/robot_challenge/NYUlab",
                         help="The input folder")
     
     args = parser.parse_args()
     path = args.path
     # GETTING FOLDER NAME AND CREATING PARENT FOLDERS
-    # todo nei dati rimuovere lo split, basta fare una semplice move di tutto quello all'intero e cancellare train e val
     images = os.path.join(path, "images")
     depth = os.path.join(path, "depth")
 
