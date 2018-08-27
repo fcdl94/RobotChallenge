@@ -5,6 +5,7 @@ import torch.nn as nn
 import data_loader as dl
 import math
 import OBC.ClassificationMetric
+import Depth.RGBDNet as RGBDNet
 from torchvision.datasets import ImageFolder
 import par_sets as ps
 import Piggyback.networks as pbnet
@@ -18,6 +19,12 @@ folders = {
 }
 network_list = ["resnet", "piggyback"]
 
+classes_list = {
+    "OC": 51,
+    "PE": 18,
+    "SC": 10
+}
+
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Masked model for VDA challenge')
     # NAMING-PARAMETERS
@@ -29,6 +36,8 @@ if __name__ == '__main__':
                         help='Where to store the checkpoints')
     parser.add_argument('-v', '--visdom', type=str, default="training",
                         help='Select the visdom environment.')
+    parser.add_argument('-n', '--name', type=str, default=None,
+                        help='If this is given, visdom and prefix will be called as this.')
     # TRAINING PARAMETERS
     parser.add_argument('--lr', type=float, default=None,
                         help='The learning rate to apply into training')
@@ -53,6 +62,8 @@ if __name__ == '__main__':
                         help='Which is the network to use')
     parser.add_argument("--depth", type=int, default=0,
                         help="if this is true, depth will be used.")
+    parser.add_argument("--rgb", type=int, default=1,
+                        help="if this is true, rgb will be used.")
 
     args = parser.parse_args()
     
@@ -60,11 +71,18 @@ if __name__ == '__main__':
     task = args.task
     if task not in task_list:
         raise(Exception("Please be sure to use available task"))
-        
+    
+    if args.name:
+        visdom = args.name
+        prefix = args.name
+    else:
+        visdom = args.visdom
+        prefix = args.prefix
+    
     folder = args.folder if args.folder else folders[task]
     
     depth = args.depth
-    rgb = not args.depth
+    rgb = args.rgb
     
     par_set = ps.get_parameter_set(args.set)
     step = args.step if args.step else par_set["step"]
@@ -76,7 +94,6 @@ if __name__ == '__main__':
     
     if task == "OC":
         from Depth.RODDataset import RODDataset
-        classes = 51
         cost_function = nn.CrossEntropyLoss()
         metric = OBC.ClassificationMetric.ClassificationMetric()
         # Image folder for train and val
@@ -86,16 +103,13 @@ if __name__ == '__main__':
     elif task == "PE":
         import PoseEstimation.PELoss as pel
         from PoseEstimation.LinemodDataset import LinemodDataset
-        classes = 15 + 3
-        # classes = 2 + 3
-        cost_function = pel.PE3DLoss(classes - 3)
-        metric = pel.PEMetric(classes - 3, math.radians(5))
+        cost_function = pel.PE3DLoss(classes_list["PE"] - 3)
+        metric = pel.PEMetric(classes_list["PE"] - 3, math.radians(5))
         train_loader = dl.get_image_folder_loaders(folder + "/train", LinemodDataset, "NO", batch, rgb, depth)
         test_loader = dl.get_image_folder_loaders(folder + "/val", LinemodDataset, "NO", batch, rgb, depth)
         index = 1
     elif task == "SC":
         from Depth.NYUDataset import NYUDataset
-        classes = 10
         cost_function = nn.CrossEntropyLoss()
         metric = OBC.ClassificationMetric.ClassificationMetric()
         # Image folder for train and val
@@ -106,17 +120,24 @@ if __name__ == '__main__':
         # never executed, needed only for remove warnings.
         raise(Exception("Error in parameters. Task should be one between " + str(task_list)))
     
+    
     # basic network (will be changed according to te baseline)
     if args.network == network_list[0]:
-        model = OBC.networks.resnet18(classes, args.pretrained)
+        if depth and rgb:
+            model = RGBDNet.double_resnet18(classes_list[task])
+        else:
+            model = OBC.networks.resnet18(classes_list[task], args.pretrained)
     elif args.network == network_list[1]:
-        model = pbnet.piggyback_net([51, 18, 10], args.pretrained)
-        model.set_index(index)
+        if depth and rgb:
+            raise(Exception("Not yet implemented"))
+        else:
+            model = pbnet.piggyback_net(classes_list.values(), args.pretrained)
+            model.set_index(index)
     else:
         raise(Exception("Error in parameters. Network should be one between " + str(network_list)))
     
     if not TEST:
-        accuracy = training.train(args.network, model, train_loader, test_loader, prefix=args.prefix, visdom_env=args.visdom,
+        accuracy = training.train(args.network, model, train_loader, test_loader, prefix=prefix, visdom_env=visdom,
                                   step=step, batch=batch, epochs=epochs, lr=lr, decay=decay,
                                   freeze=args.frozen, cost_function=cost_function, metric=metric)
     else:
@@ -126,16 +147,18 @@ if __name__ == '__main__':
     
     out = open("RESULTS.txt", "a")
     output = {
+        "name"   : visdom,
         "task"   : args.task,
         "net"    : args.network,
+        "rgb"    : rgb,
+        "depth"  : depth,
         "epochs" : epochs,
         "lr"     : lr,
         "step"   : step,
         "decay"  : decay,
         "bs"     : batch,
         "max_acc": accuracy[0],
-        "end_acc": accuracy[1],
-        "depth"  : depth
+        "end_acc": accuracy[1]
     }
     print(str(output))
     out.write(str(output) + "\n")
