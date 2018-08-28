@@ -5,6 +5,7 @@ import torch.nn as nn
 import data_loader as dl
 import math
 import OBC.ClassificationMetric
+import Depth.RGBDNet as RGBDNet
 from torchvision.datasets import ImageFolder
 import par_sets as ps
 import Piggyback.networks as pbnet
@@ -12,10 +13,16 @@ import Piggyback.networks as pbnet
 task_list = ["OC", "PE", "SC"]
 folders = {
     "PE": '/home/fabio/robot_challenge/linemod',
-    "SC": '/home/fabio/robot_challenge/NYUlab/data/images',
+    "SC": '/home/fabio/robot_challenge/NYUlab',
     "OC": '/home/fabio/robot_challenge/rod/split1'
 }
 network_list = ["resnet", "piggyback"]
+
+classes_list = {
+    "OC": 51,
+    "PE": 19,
+    "SC": 10
+}
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Masked model for VDA challenge')
@@ -28,6 +35,8 @@ if __name__ == '__main__':
                         help='Where to store the checkpoints')
     parser.add_argument('-v', '--visdom', type=str, default="training",
                         help='Select the visdom environment.')
+    parser.add_argument('--name', type=str, default=None,
+                        help='If this is given, visdom and prefix will be called as this.')
     # TRAINING PARAMETERS
     parser.add_argument('--lr', type=float, default=None,
                         help='The learning rate to apply into training')
@@ -50,6 +59,10 @@ if __name__ == '__main__':
                         help='Which is the task to run')
     parser.add_argument('-n', '--network', type=str, default='resnet',
                         help='Which is the network to use')
+    parser.add_argument("--depth", type=int, default=0,
+                        help="if this is true, depth will be used.")
+    parser.add_argument("--rgb", type=int, default=1,
+                        help="if this is true, rgb will be used.")
 
     args = parser.parse_args()
     
@@ -57,8 +70,18 @@ if __name__ == '__main__':
     task = args.task
     if task not in task_list:
         raise(Exception("Please be sure to use available task"))
-        
+    
+    if args.name:
+        visdom = args.name
+        prefix = args.name
+    else:
+        visdom = args.visdom
+        prefix = args.prefix
+    
     folder = args.folder if args.folder else folders[task]
+    
+    depth = args.depth
+    rgb = args.rgb
     
     par_set = ps.get_parameter_set(args.set)
     step = args.step if args.step else par_set["step"]
@@ -69,30 +92,29 @@ if __name__ == '__main__':
     decay = args.decay if args.decay else par_set["decay"]
     
     if task == "OC":
-        classes = 51
+        from Depth.RODDataset import RODDataset
         cost_function = nn.CrossEntropyLoss()
         metric = OBC.ClassificationMetric.ClassificationMetric()
         # Image folder for train and val
-        train_loader = dl.get_image_folder_loaders(folder + "/train", ImageFolder, "SM", batch)
-        test_loader = dl.get_image_folder_loaders(folder + "/val", ImageFolder, "NO", batch)
+        train_loader = dl.get_image_folder_loaders(folder + "/train", RODDataset, "SC", batch, rgb, depth)
+        test_loader = dl.get_image_folder_loaders(folder + "/val", RODDataset, "NO", batch, rgb, depth)
         index = 0
     elif task == "PE":
         import PoseEstimation.PELoss as pel
         from PoseEstimation.LinemodDataset import LinemodDataset
-        classes = 15 + 4  # 15 classes and 4 quaternion values
-        cost_function = pel.PE3DLoss(classes - 4)
-        metric = pel.PEMetric(classes - 4)
+        cost_function = pel.PE3DLoss(classes_list["PE"] - 4)
+        metric = pel.PEMetric(classes_list["PE"] - 4)
         # revert here. train / val not sample
         train_loader = dl.get_image_folder_loaders(folder + "/train", LinemodDataset, "NO", batch)
         test_loader = dl.get_image_folder_loaders(folder + "/val", LinemodDataset, "NO", batch)
         index = 1
     elif task == "SC":
-        classes = 10
+        from Depth.NYUDataset import NYUDataset
         cost_function = nn.CrossEntropyLoss()
         metric = OBC.ClassificationMetric.ClassificationMetric()
         # Image folder for train and val
-        train_loader = dl.get_image_folder_loaders(folder + "/train", ImageFolder, "SM", batch)
-        test_loader = dl.get_image_folder_loaders(folder + "/val", ImageFolder, "NO", batch)
+        train_loader = dl.get_image_folder_loaders(folder + "/train", NYUDataset, "SM", batch, rgb, depth)
+        test_loader = dl.get_image_folder_loaders(folder + "/val", NYUDataset, "NO", batch, rgb, depth)
         index = 2
     else:
         # never executed, needed only for remove warnings.
@@ -100,16 +122,21 @@ if __name__ == '__main__':
     
     # basic network (will be changed according to te baseline)
     if args.network == network_list[0]:
-        model = OBC.networks.resnet18(classes, args.pretrained)
+        if depth and rgb:
+            model = RGBDNet.double_resnet18(classes_list[task])
+        else:
+            model = OBC.networks.resnet18(classes_list[task], args.pretrained)
     elif args.network == network_list[1]:
-        # revert here. 19 not 6
-        model = pbnet.piggyback_net([51, 19, 10], args.pretrained)
-        model.set_index(index)
+        if depth and rgb:
+            raise(Exception("Not yet implemented"))
+        else:
+            model = pbnet.piggyback_net(classes_list.values(), args.pretrained)
+            model.set_index(index)
     else:
         raise(Exception("Error in parameters. Network should be one between " + str(network_list)))
     
     if not TEST:
-        accuracy = training.train(args.network, model, train_loader, test_loader, prefix=args.prefix, visdom_env=args.visdom,
+        accuracy = training.train(args.network, model, train_loader, test_loader, prefix=prefix, visdom_env=visdom,
                                   step=step, batch=batch, epochs=epochs, lr=lr, decay=decay,
                                   freeze=args.frozen, cost_function=cost_function, metric=metric)
     else:
@@ -119,8 +146,11 @@ if __name__ == '__main__':
     
     out = open("RESULTS.txt", "a")
     output = {
+        "name"   : visdom,
         "task"   : args.task,
         "net"    : args.network,
+        "rgb"    : rgb,
+        "depth"  : depth,
         "epochs" : epochs,
         "lr"     : lr,
         "step"   : step,

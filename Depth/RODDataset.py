@@ -4,20 +4,7 @@ import numpy as np
 import sys
 import os
 from PIL import Image
-from PoseEstimation.utils import quaternion_from_matrix
-
-
-def linemod_rotation(fname):
-    """
-    read a 3x3 rotation and trasform it into quaternion
-    """
-    R = open(fname)
-    R.readline()  # discard first line
-    R = np.float32(R.read().split()).reshape(3, 3)  # save the matrix
-    
-    q = quaternion_from_matrix(R)
-    
-    return q
+from PoseEstimation.utils import rot_matrix_to_RPY
 
 
 def make_dataset(dir, class_to_idx):
@@ -28,20 +15,13 @@ def make_dataset(dir, class_to_idx):
         if not os.path.isdir(d):
             continue
         for fname in os.listdir(d):
-            if "rot" in fname:
-                path_rot = os.path.join(d, fname)
-                quaternion = linemod_rotation(path_rot)
-                t = [class_to_idx[target]] + quaternion.tolist()
-                t = torch.FloatTensor(t)
-
-                index = int(fname[3:-4])
-                path_rgb = os.path.join(d, "color{:0>4d}.png".format(index))
-                path_depth = os.path.join(d, "depth{:0>4d}.png".format(index))
-
+            if "_crop" in fname: # per ROD _crop.png e _depthcrop.png
+                path_rgb = os.path.join(d, fname)
+                path_depth = os.path.join(d, fname[:-8] + "depthcrop.png")
                 if os.path.isfile(path_rgb) and os.path.isfile(path_depth):
-                    item = ((path_rgb, path_depth), t)
+                    item = ((path_rgb, path_depth), class_to_idx[target] )
                     images.append(item)
-
+    
     return images
 
 
@@ -52,11 +32,11 @@ def pil_loader(path):
         return img.convert('RGB')
 
 
-class LinemodDataset(Dataset):
-    """ Linemod dataset."""
+class RODDataset(Dataset):
+    """ Dataset to load both RGB and D images."""
     
     def __init__(self, root, transform=None, target_transform=None, rgb=True, depth=False):
-    
+        
         classes, class_to_idx = self._find_classes(root)
         samples = make_dataset(root, class_to_idx)
         if len(samples) == 0:
@@ -73,8 +53,8 @@ class LinemodDataset(Dataset):
         self.rgb = rgb
         self.depth = depth
         if not rgb and not depth:
-            raise (Exception("A value between rgb and depth must be True. Change the parameters and try again."))
-
+            raise(Exception("A value between rgb and depth must be True. Change the parameters and try again."))
+    
     def __len__(self):
         return len(self.samples)
     
@@ -84,8 +64,8 @@ class LinemodDataset(Dataset):
             index (int): Index
         Returns:
             tuple: (sample, target) where:
-                target is class_index of the target class plus the associated quaternion
-                
+                sample contains the image (RGB or D or RGB-D)
+                target is class_index of the target class
         """
         path, target = self.samples[index]
 
@@ -134,7 +114,7 @@ class LinemodDataset(Dataset):
         classes.sort()
         class_to_idx = {classes[i]: i for i in range(len(classes))}
         return classes, class_to_idx
-
+    
     def __repr__(self):
         fmt_str = 'Dataset ' + self.__class__.__name__ + '\n'
         fmt_str += '    Number of datapoints: {}\n'.format(self.__len__())

@@ -12,14 +12,14 @@ if __name__ == '__main__':
     args = parser.parse_args()
     path = args.path
 
-    ids_file = open("rod_split" + str(args.index), "r")
+    ids_file = open("data/rod_split" + str(args.index), "r")
     map_ids = []
     for line in ids_file:
         map_ids.append(line.strip())
         print(line.strip())
 
     source_path = path + "/original"
-    dest_path = path + "/split" + str(args.index)
+    dest_path = path + "/split_d" + str(args.index)
     if not os.path.exists(dest_path):
         os.mkdir(dest_path)
         os.mkdir(dest_path + "/val")
@@ -44,5 +44,5 @@ if __name__ == '__main__':
                     os.mkdir(dest)
 
                 for image in os.listdir(src):
-                    if "crop" in image and "depth" not in image and "mask" not in image:
+                    if "crop" in image and "mask" not in image:
                         copyfile(src+"/"+image, dest+"/"+image)
