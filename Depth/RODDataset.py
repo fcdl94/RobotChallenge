@@ -68,27 +68,32 @@ class RODDataset(Dataset):
                 target is class_index of the target class
         """
         path, target = self.samples[index]
-        
+
         if self.rgb:
             sample_rgb = self.loader(path[0])
-            if self.transform is not None:
-                sample_rgb = self.transform(sample_rgb)
-                
+
         if self.depth:
             sample_depth = self.loader(path[1])
-            if self.transform is not None:
-                sample_depth = self.transform(sample_depth)
-        
+
         if self.rgb and self.depth:
+            if self.transform is not None:
+                if self.transform[0] is not None:
+                    sample_rgb = self.transform[0](sample_rgb)
+                if self.transform[1] is not None:
+                    sample_depth = self.transform[1](sample_depth)
             sample = (sample_rgb, sample_depth)
         elif self.rgb:
+            if self.transform is not None:
+                sample_rgb = self.transform(sample_rgb)
             sample = sample_rgb
         else:
+            if self.transform is not None:
+                sample_depth = self.transform(sample_depth)
             sample = sample_depth
-        
+
         if self.target_transform is not None:
             target = self.target_transform(target)
-        
+
         return sample, target
     
     def _find_classes(self, dir):
