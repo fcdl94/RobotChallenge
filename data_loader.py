@@ -9,8 +9,7 @@ NO_CUDA = False
 # image normalization
 IMAGE_CROP = 224
 IMAGENET_MEAN = [0.485, 0.456, 0.406]
-#IMAGENET_STD = [0.229, 0.224, 0.225]
-IMAGENET_STD = [1, 1, 1]
+IMAGENET_STD = [0.229, 0.224, 0.225]
 
 
 def get_image_folder_loaders(folder, dataset, name, batch=BATCH_SIZE, rgb=True, depth=False):
@@ -43,7 +42,7 @@ def get_data_transform(name, rgb):
     # Create Data loader w.r.t. chosen transformations
     if rgb:
         MEAN = IMAGENET_MEAN
-        STD = IMAGENET_STD
+        STD = [1, 1, 1]
     else:
         MEAN = [0, 0, 0]
         STD = [1, 1, 1]
