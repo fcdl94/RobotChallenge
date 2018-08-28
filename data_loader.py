@@ -19,8 +19,18 @@ def get_image_folder_loaders(folder, dataset, name, batch=BATCH_SIZE, rgb=True, 
     
     # data pre-processing
     workers = WORKERS if cuda else 0
+
+    if rgb and depth:
+        data_transform = get_data_transform(name, True)
+        data_transform_2 = get_data_transform(name, False)
+        data_transform = (data_transform, data_transform_2)
+    elif rgb:
+        data_transform = get_data_transform(name, True)
+    elif depth:
+        data_transform = get_data_transform(name, False)
+    else:
+        raise(Exception("rgb and depth are both False"))
     
-    data_transform = get_data_transform(name)
     # Build the training loader
     dataset = dataset(root=folder, transform=data_transform, rgb=rgb, depth=depth)
     loader = torch.utils.data.DataLoader(dataset, batch_size=batch, shuffle=True, num_workers=workers)
@@ -29,33 +39,40 @@ def get_image_folder_loaders(folder, dataset, name, batch=BATCH_SIZE, rgb=True, 
 
 
 # DATA_TRANSFORMS = ["NO", "SC", "SM", "MI"]
-def get_data_transform(name):
+def get_data_transform(name, rgb):
     # Create Data loader w.r.t. chosen transformations
+    if rgb:
+        MEAN = IMAGENET_MEAN
+        STD = IMAGENET_STD
+    else:
+        MEAN = [0, 0, 0]
+        STD = [1, 1, 1]
+    
     if name == "NO":
         data_transform = transforms.Compose([
             transforms.Resize((IMAGE_CROP, IMAGE_CROP)),
             transforms.ToTensor(),
-            transforms.Normalize(mean=IMAGENET_MEAN, std=IMAGENET_STD)
+            transforms.Normalize(mean=MEAN, std=STD)
         ])
     elif name == "SC":  # scaling
         data_transform = transforms.Compose([
             transforms.RandomResizedCrop(IMAGE_CROP, scale=(0.8, 1.0)),
             transforms.ToTensor(),
-            transforms.Normalize(mean=IMAGENET_MEAN, std=IMAGENET_STD)
+            transforms.Normalize(mean=MEAN, std=STD)
         ])
     elif name == "SM":  # scaling and mirror
         data_transform = transforms.Compose([
             transforms.RandomResizedCrop(IMAGE_CROP, scale=(0.8, 1.0)),
             transforms.RandomHorizontalFlip(),
             transforms.ToTensor(),
-            transforms.Normalize(mean=IMAGENET_MEAN, std=IMAGENET_STD)
+            transforms.Normalize(mean=MEAN, std=STD)
         ])
     elif name == "MI":  # mirror
         data_transform = transforms.Compose([
             transforms.Resize((IMAGE_CROP, IMAGE_CROP)),
             transforms.RandomHorizontalFlip(),
             transforms.ToTensor(),
-            transforms.Normalize(mean=IMAGENET_MEAN, std=IMAGENET_STD)
+            transforms.Normalize(mean=MEAN, std=STD)
         ])
     else:
         raise (Exception("Transform code not known"))

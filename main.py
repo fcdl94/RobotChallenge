@@ -36,7 +36,7 @@ if __name__ == '__main__':
                         help='Where to store the checkpoints')
     parser.add_argument('-v', '--visdom', type=str, default="training",
                         help='Select the visdom environment.')
-    parser.add_argument('-n', '--name', type=str, default=None,
+    parser.add_argument('--name', type=str, default=None,
                         help='If this is given, visdom and prefix will be called as this.')
     # TRAINING PARAMETERS
     parser.add_argument('--lr', type=float, default=None,
@@ -119,7 +119,6 @@ if __name__ == '__main__':
     else:
         # never executed, needed only for remove warnings.
         raise(Exception("Error in parameters. Task should be one between " + str(task_list)))
-    
     
     # basic network (will be changed according to te baseline)
     if args.network == network_list[0]:

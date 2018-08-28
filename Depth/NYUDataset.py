@@ -5,7 +5,7 @@ import sys
 import os
 from PIL import Image
 from PoseEstimation.utils import rot_matrix_to_RPY
-
+from PIL import ImageMath
 
 def make_dataset(dir, class_to_idx):
     images = []
@@ -29,6 +29,10 @@ def pil_loader(path):
     # open path as file to avoid ResourceWarning (https://github.com/python-pillow/Pillow/issues/835)
     with open(path, 'rb') as f:
         img = Image.open(f)
+        
+        if img.mode == 'I':
+            img = ImageMath.eval('im/256', {'im': img})
+            
         return img.convert('RGB')
 
 
