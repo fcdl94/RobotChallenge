@@ -128,9 +128,9 @@ if __name__ == '__main__':
             model = OBC.networks.resnet18(classes_list[task], args.pretrained)
     elif args.network == network_list[1]:
         if depth and rgb:
-            raise(Exception("Not yet implemented"))
+            model = RGBDNet.double_piggyback18(classes_list.values(), index, args.pretrained)
         else:
-            model = pbnet.piggyback_net(classes_list.values(), args.pretrained)
+            model = pbnet.piggyback_net18(classes_list.values(), args.pretrained)
             model.set_index(index)
     else:
         raise(Exception("Error in parameters. Network should be one between " + str(network_list)))
