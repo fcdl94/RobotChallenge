@@ -168,7 +168,7 @@ def train_epoch(model, epoch, train_loader, optimizers, cost_function):
 
         # Move the variables to GPU
         if cuda:
-            if isinstance(data, tuple):
+            if isinstance(data, list):
                 data = data[0].cuda(), data[1].cuda()
                 target = target.cuda()
             else:
@@ -210,7 +210,7 @@ def test_epoch(model, test_loader, cost_function, metric):
     for data, target in test_loader:
         # Move the variables to GPU
         if cuda:
-            if isinstance(data, tuple):
+            if isinstance(data, list):
                 data = data[0].cuda(), data[1].cuda()
                 target = target.cuda()
             else:
