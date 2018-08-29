@@ -105,8 +105,8 @@ if __name__ == '__main__':
         cost_function = pel.PE3DLoss(classes_list["PE"] - 4)
         metric = pel.PEMetric(classes_list["PE"] - 4)
         # revert here. train / val not sample
-        train_loader = dl.get_image_folder_loaders(folder + "/train", LinemodDataset, "NO", batch)
-        test_loader = dl.get_image_folder_loaders(folder + "/val", LinemodDataset, "NO", batch)
+        train_loader = dl.get_image_folder_loaders(folder + "/train", LinemodDataset, "NO", batch, rgb, depth)
+        test_loader = dl.get_image_folder_loaders(folder + "/val", LinemodDataset, "NO", batch, rgb, depth)
         index = 1
     elif task == "SC":
         from Depth.NYUDataset import NYUDataset
