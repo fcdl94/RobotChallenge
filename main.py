@@ -13,7 +13,7 @@ import Piggyback.networks as pbnet
 task_list = ["OC", "PE", "SC"]
 folders = {
     "PE": '/home/fabio/robot_challenge/linemod',
-    "SC": '/home/fcdl/Develop/Data/sample', # '/home/fabio/robot_challenge/NYUlab',
+    "SC": '/home/fabio/robot_challenge/NYUlab',
     "OC": '/home/fabio/robot_challenge/rod/split1'
 }
 network_list = ["resnet", "piggyback", "quantized"]
