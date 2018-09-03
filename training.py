@@ -38,7 +38,7 @@ def train(network, model, train_loader, test_loader, freeze=False, prefix="check
                 par.requires_grad = False
     
     # Set optimizer and scheduler
-    if not network == "piggyback":
+    if not (network == "piggyback" or network=="quantized"):
         params_to_optim = list(filter(lambda p: p.requires_grad, model.parameters()))
         # set optimizer and scheduler
         optimizer = optim.SGD(params_to_optim, lr=lr, momentum=momentum, weight_decay=decay)
@@ -63,7 +63,8 @@ def train(network, model, train_loader, test_loader, freeze=False, prefix="check
     
     # Consider this as a sanity check
     for name, par in model.named_parameters():
-        print(name + " requires_grad: " + str(par.requires_grad))
+        if par.requires_grad:
+            print(name + " requires_grad: " + str(par.requires_grad))
         
     # prepare for training
     if cuda:

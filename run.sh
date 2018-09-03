@@ -1,9 +1,9 @@
 #!/bin/bash
 x=1
 
-while [ ${x} -le $2 ]
+while [ ${x} -le $1 ]
 do
-python main.py --t $1 --name $1_$3-$4_${x} --set rod --net resnet --rgb $3 --depth $4
+python main.py --t SC --name SC_$3-$4_${x} --set rod -n quantized --rgb $3 --depth $4
 (( x++ ))
 done
 

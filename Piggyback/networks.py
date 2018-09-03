@@ -1,21 +1,27 @@
 import torch.nn as nn
 import torch
-from Piggyback.custom_layers import MaskedConv2d
+from Piggyback.custom_layers import MaskedConv2d, QuantizedConv2d
 import torch.utils.model_zoo as model_zoo
 
 
 class BasicMaskedBlock(nn.Module):  # Define a residual block
-    def __init__(self, inplanes, planes, stride=1, first=False, model_size=1):
+    def __init__(self, inplanes, planes, stride=1, first=False, mask=1, quantized=False):
         super(BasicMaskedBlock, self).__init__()
-        self.conv1 = MaskedConv2d(inplanes, planes, kernel_size=3, stride=stride, padding=1, model_size=model_size)
+        
+        if quantized:
+            convBlock = QuantizedConv2d
+        else:
+            convBlock = MaskedConv2d
+        
+        self.conv1 = convBlock(inplanes, planes, kernel_size=3, stride=stride, padding=1, mask=mask)
         self.bn1 = nn.BatchNorm2d(planes)
         self.relu = nn.ReLU(inplace=True)
-        self.conv2 = MaskedConv2d(planes, planes, kernel_size=3, padding=1, model_size=model_size)
+        self.conv2 = convBlock(planes, planes, kernel_size=3, padding=1, mask=mask)
         self.bn2 = nn.BatchNorm2d(planes)
 
         if first:
             self.downsample = nn.Sequential(
-                  MaskedConv2d(inplanes, planes, kernel_size=1, stride=stride, model_size=model_size),
+                  convBlock(inplanes, planes, kernel_size=1, stride=stride, mask=mask),
                   nn.BatchNorm2d(planes)
             )
         
@@ -43,26 +49,32 @@ class BasicMaskedBlock(nn.Module):  # Define a residual block
         return out
 
 
-class PiggybackNet(nn.Module):
+class MaskedNet(nn.Module):
     # UNICO PROBLEMA RIMASTO QUI E' CHE ABBIAMO UNA UNICA BN. PER AVERNE PIÚ DI UNA DOVREI CAMBIARE E METTERE MODULELIST
-    def __init__(self, layers, classes=[1000], fc=True):
-        super(PiggybackNet, self).__init__()
+    def __init__(self, layers, classes=[1000], fc=True, quantized=False):
+        super(MaskedNet, self).__init__()
 
-        self.block = MaskedConv2d
-        self.resnet_block = BasicMaskedBlock
+        if quantized:
+            convBlock = QuantizedConv2d
+        else:
+            convBlock = MaskedConv2d
+        
+        self.quantized = quantized
+
+        self.block = convBlock
         self.in_channel = 64
         self.models = len(classes)
         kernel_size = 3
         
-        self.conv1 = MaskedConv2d(3, 64, kernel_size=7, stride=2, padding=3, model_size=self.models)
+        self.conv1 = convBlock(3, 64, kernel_size=7, stride=2, padding=3, mask=self.models)
         self.bn1 = nn.BatchNorm2d(64)
         self.relu = nn.ReLU(inplace=True)
         self.maxpool = nn.MaxPool2d(kernel_size=3, stride=2, padding=1)
         
-        self.layer1 = self._make_layer_(self.resnet_block, 64, kernel_size, layers[0])
-        self.layer2 = self._make_layer_(self.resnet_block, 128, kernel_size,  layers[1], stride=2)
-        self.layer3 = self._make_layer_(self.resnet_block, 256, kernel_size,  layers[2], stride=2)
-        self.layer4 = self._make_layer_(self.resnet_block, 512, kernel_size,  layers[3], stride=2)
+        self.layer1 = self._make_layer_(64, layers[0])
+        self.layer2 = self._make_layer_(128, layers[1], stride=2)
+        self.layer3 = self._make_layer_(256, layers[2], stride=2)
+        self.layer4 = self._make_layer_(512, layers[3], stride=2)
 
         self.avgpool = nn.AvgPool2d(7, stride=1)
         if fc:
@@ -71,12 +83,13 @@ class PiggybackNet(nn.Module):
         self.fc_exists = fc
         
         self.index = 0
+        self.set_index(self.index)
 
     def set_index(self, index):
-        if index < self.models:
+        if 0 <= index < self.models:
             self.index = index
             for m in self.modules():
-                if isinstance(m, MaskedConv2d):
+                if isinstance(m, MaskedConv2d) or isinstance(m, QuantizedConv2d):
                     m.set_index(index)
 
             if self.fc_exists:
@@ -89,12 +102,12 @@ class PiggybackNet(nn.Module):
                         for par in self.fc[i].parameters():
                             par.requires_grad = False
 
-    def _make_layer_(self, block, planes, kernel_size, blocks, stride=1):
+    def _make_layer_(self, planes, blocks, stride=1):
         strides = [stride] + [1] * (blocks - 1)
         layers = []
         for i in range(0, blocks):
-            layers.append(block(self.in_channel, planes,
-                                stride=strides[i], first=(i == 0), model_size=self.models))
+            layers.append(BasicMaskedBlock(self.in_channel, planes, stride=strides[i], first=(i == 0),
+                                           mask=self.models, quantized=self.quantized))
             self.in_channel = planes
 
         return nn.Sequential(*layers)
@@ -118,18 +131,34 @@ class PiggybackNet(nn.Module):
 
 
 def piggyback_net18(model_classes, pre_imagenet=True, pretrained=None, bn=False, fc=True):
-    model = PiggybackNet(classes=model_classes, layers=[2, 2, 2, 2], fc=fc)
+    model = MaskedNet(classes=model_classes, layers=[2, 2, 2, 2], fc=fc)
     if pre_imagenet:
         model.load_state_dict(model_zoo.load_url('https://download.pytorch.org/models/resnet18-5c106cde.pth'), False)
     if pretrained:
         model.load_state_dict(torch.load(pretrained)["state_dict"])
     
-        if not bn:
-            for m in model.modules():
-                if isinstance(m, nn.BatchNorm1d) or isinstance(m, nn.BatchNorm2d):
-                    m.weight.requires_grad = False
-                    m.bias.requires_grad = False
+    if not bn:
+        for m in model.modules():
+            if isinstance(m, nn.BatchNorm1d) or isinstance(m, nn.BatchNorm2d):
+                m.weight.requires_grad = False
+                m.bias.requires_grad = False
         
-        print("Model pretrained loaded")
+    print("Model pretrained loaded")
     return model
 
+
+def quantized_net18(model_classes, pre_imagenet=True, pretrained=None, bn=False, fc=True):
+    model = MaskedNet(classes=model_classes, layers=[2, 2, 2, 2], fc=fc, quantized=True)
+    if pre_imagenet:
+        model.load_state_dict(model_zoo.load_url('https://download.pytorch.org/models/resnet18-5c106cde.pth'), False)
+    if pretrained:
+        model.load_state_dict(torch.load(pretrained)["state_dict"])
+        
+    if not bn:
+        for m in model.modules():
+            if isinstance(m, nn.BatchNorm1d) or isinstance(m, nn.BatchNorm2d):
+                m.weight.requires_grad = False
+                m.bias.requires_grad = False
+    
+    print("Model pretrained loaded")
+    return model

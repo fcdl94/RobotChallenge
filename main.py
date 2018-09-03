@@ -13,10 +13,10 @@ import Piggyback.networks as pbnet
 task_list = ["OC", "PE", "SC"]
 folders = {
     "PE": '/home/fabio/robot_challenge/linemod',
-    "SC": '/home/fabio/robot_challenge/NYUlab',
+    "SC": '/home/fcdl/Develop/Data/sample', # '/home/fabio/robot_challenge/NYUlab',
     "OC": '/home/fabio/robot_challenge/rod/split1'
 }
-network_list = ["resnet", "piggyback"]
+network_list = ["resnet", "piggyback", "quantized"]
 
 classes_list = {
     "OC": 51,
@@ -131,6 +131,12 @@ if __name__ == '__main__':
             model = RGBDNet.double_piggyback18(classes_list.values(), index, args.pretrained)
         else:
             model = pbnet.piggyback_net18(classes_list.values(), args.pretrained)
+            model.set_index(index)
+    elif args.network == network_list[2]:
+        if depth and rgb:
+            model = RGBDNet.double_quantized18(classes_list.values(), index, args.pretrained)
+        else:
+            model = pbnet.quantized_net18(classes_list.values(), args.pretrained)
             model.set_index(index)
     else:
         raise(Exception("Error in parameters. Network should be one between " + str(network_list)))
