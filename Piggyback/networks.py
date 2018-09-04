@@ -2,46 +2,71 @@ import torch.nn as nn
 import torch
 from Piggyback.custom_layers import MaskedConv2d, QuantizedConv2d
 import torch.utils.model_zoo as model_zoo
+import math
 
 
 class BasicMaskedBlock(nn.Module):  # Define a residual block
-    def __init__(self, inplanes, planes, stride=1, first=False, mask=1, quantized=False):
+    
+    def __init__(self, inplanes, planes, stride=1, classes=1, first=False, quantized=False):
         super(BasicMaskedBlock, self).__init__()
+        
+        self.classes = classes
+        self.index = 0
         
         if quantized:
             convBlock = QuantizedConv2d
         else:
             convBlock = MaskedConv2d
         
-        self.conv1 = convBlock(inplanes, planes, kernel_size=3, stride=stride, padding=1, mask=mask)
-        self.bn1 = nn.BatchNorm2d(planes)
+        self.conv1 = convBlock(inplanes, planes, kernel_size=3, stride=stride, padding=1, mask=classes)
+        self.bn1 = nn.ModuleList([nn.BatchNorm2d(planes) for i in range(classes)])
         self.relu = nn.ReLU(inplace=True)
-        self.conv2 = convBlock(planes, planes, kernel_size=3, padding=1, mask=mask)
-        self.bn2 = nn.BatchNorm2d(planes)
+        self.conv2 = convBlock(planes, planes, kernel_size=3, padding=1, mask=classes)
+        self.bn2 = nn.ModuleList([nn.BatchNorm2d(planes) for i in range(classes)])
 
         if first:
             self.downsample = nn.Sequential(
-                  convBlock(inplanes, planes, kernel_size=1, stride=stride, mask=mask),
-                  nn.BatchNorm2d(planes)
+                  convBlock(inplanes, planes, kernel_size=1, stride=stride, mask=classes)
             )
+
+            self.bn3 = nn.ModuleList([nn.BatchNorm2d(planes) for i in range(classes)])
         
         self.stride = stride
         self.first = first
-        self.index = 0
-
+        
     def set_index(self, index):
-        self.index = index
-
+        if 0 <= index < self.classes:
+            self.index = 0
+            for i in range(self.classes):
+                if index == i:
+                    self.bn1[i].weight.requires_grad = True
+                    self.bn1[i].bias.requires_grad = True
+                    self.bn2[i].weight.requires_grad = True
+                    self.bn2[i].bias.requires_grad = True
+                    if self.first:
+                        self.bn3[i].weight.requires_grad = True
+                        self.bn3[i].bias.requires_grad = True
+                else:
+                    self.bn1[i].weight.requires_grad = False
+                    self.bn1[i].bias.requires_grad = False
+                    self.bn2[i].weight.requires_grad = False
+                    self.bn2[i].bias.requires_grad = False
+                    if self.first:
+                        self.bn3[i].weight.requires_grad = False
+                        self.bn3[i].bias.requires_grad = False
+            
+        
     def forward(self, x):
         if self.first:
             residual = self.downsample(x)
+            residual = self.bn3[self.index](residual)
         else:
             residual = x
         out = self.conv1(x)
-        out = self.bn1(out)
+        out = self.bn1[self.index](out)
         out = self.relu(out)
         out = self.conv2(out)
-        out = self.bn2(out)
+        out = self.bn2[self.index](out)
 
         out += residual
         out = self.relu(out)
@@ -50,7 +75,6 @@ class BasicMaskedBlock(nn.Module):  # Define a residual block
 
 
 class MaskedNet(nn.Module):
-    # UNICO PROBLEMA RIMASTO QUI E' CHE ABBIAMO UNA UNICA BN. PER AVERNE PIÚ DI UNA DOVREI CAMBIARE E METTERE MODULELIST
     def __init__(self, layers, classes=[1000], fc=True, quantized=False):
         super(MaskedNet, self).__init__()
 
@@ -64,10 +88,9 @@ class MaskedNet(nn.Module):
         self.block = convBlock
         self.in_channel = 64
         self.models = len(classes)
-        kernel_size = 3
         
         self.conv1 = convBlock(3, 64, kernel_size=7, stride=2, padding=3, mask=self.models)
-        self.bn1 = nn.BatchNorm2d(64)
+        self.bn1 = nn.ModuleList([nn.BatchNorm2d(64) for i in range(self.models)])
         self.relu = nn.ReLU(inplace=True)
         self.maxpool = nn.MaxPool2d(kernel_size=3, stride=2, padding=1)
         
@@ -84,14 +107,30 @@ class MaskedNet(nn.Module):
         
         self.index = 0
         self.set_index(self.index)
+        
+        for m in self.modules():
+            if isinstance(m, nn.Conv2d):
+                n = m.kernel_size[0] * m.kernel_size[1] * m.out_channels
+                m.weight.data.normal_(0, math.sqrt(2. / n))
+            elif isinstance(m, nn.BatchNorm2d):
+                m.weight.data.fill_(1)
+                m.bias.data.zero_()
 
     def set_index(self, index):
         if 0 <= index < self.models:
             self.index = index
             for m in self.modules():
-                if isinstance(m, MaskedConv2d) or isinstance(m, QuantizedConv2d):
+                if isinstance(m, MaskedConv2d) or isinstance(m, QuantizedConv2d) or isinstance(m, BasicMaskedBlock):
                     m.set_index(index)
 
+            for i in range(self.models):
+                if i == index:
+                    self.bn1[i].weight.requires_grad = True
+                    self.bn1[i].bias.requires_grad = True
+                else:
+                    self.bn1[i].weight.requires_grad = False
+                    self.bn1[i].bias.requires_grad = False
+    
             if self.fc_exists:
                 i = index
                 for par in self.fc[i].parameters():
@@ -106,15 +145,15 @@ class MaskedNet(nn.Module):
         strides = [stride] + [1] * (blocks - 1)
         layers = []
         for i in range(0, blocks):
-            layers.append(BasicMaskedBlock(self.in_channel, planes, stride=strides[i], first=(i == 0),
-                                           mask=self.models, quantized=self.quantized))
+            layers.append(BasicMaskedBlock(self.in_channel, planes, stride=strides[i], classes=self.models,
+                                           first=(i == 0), quantized=self.quantized))
             self.in_channel = planes
 
         return nn.Sequential(*layers)
 
     def forward(self, x):
         x = self.conv1(x)
-        x = self.bn1(x)
+        x = self.bn1[self.index](x)
         x = self.relu(x)
         x = self.maxpool(x)
 
@@ -130,7 +169,7 @@ class MaskedNet(nn.Module):
         return x
 
 
-def piggyback_net18(model_classes, pre_imagenet=True, pretrained=None, bn=False, fc=True):
+def piggyback_net18(model_classes, pre_imagenet=True, pretrained=None, bn=True, fc=True):
     model = MaskedNet(classes=model_classes, layers=[2, 2, 2, 2], fc=fc)
     if pre_imagenet:
         model.load_state_dict(model_zoo.load_url('https://download.pytorch.org/models/resnet18-5c106cde.pth'), False)
@@ -147,7 +186,7 @@ def piggyback_net18(model_classes, pre_imagenet=True, pretrained=None, bn=False,
     return model
 
 
-def quantized_net18(model_classes, pre_imagenet=True, pretrained=None, bn=False, fc=True):
+def quantized_net18(model_classes, pre_imagenet=True, pretrained=None, bn=True, fc=True):
     model = MaskedNet(classes=model_classes, layers=[2, 2, 2, 2], fc=fc, quantized=True)
     if pre_imagenet:
         model.load_state_dict(model_zoo.load_url('https://download.pytorch.org/models/resnet18-5c106cde.pth'), False)
