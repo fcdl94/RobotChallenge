@@ -5,6 +5,23 @@ import torch.utils.model_zoo as model_zoo
 import math
 
 
+def create_translator():
+    translator = {"bn1." + str(i) + ".": "bn1." for i in range(3)}
+    
+    for j in range(1, 5):
+        for k in range(0, 2):
+            for y in range(1, 3):
+                for i in range(3):
+                    key = "layer" + str(j) + "." + str(k) + ".bn" + str(y) + "."
+                    translator[key + str(i) + "."] = key
+    
+    for j in range(2, 5):
+        for i in range(3):
+            key = "layer" + str(j) + ".0."
+            translator[key + "bn3." + str(i) + "."] = key + "downsample.1."
+
+    return translator
+
 class BasicMaskedBlock(nn.Module):  # Define a residual block
     
     def __init__(self, inplanes, planes, stride=1, classes=1, first=False, quantized=False):
@@ -172,7 +189,19 @@ class MaskedNet(nn.Module):
 def piggyback_net18(model_classes, pre_imagenet=True, pretrained=None, bn=True, fc=True):
     model = MaskedNet(classes=model_classes, layers=[2, 2, 2, 2], fc=fc)
     if pre_imagenet:
-        model.load_state_dict(model_zoo.load_url('https://download.pytorch.org/models/resnet18-5c106cde.pth'), False)
+        pre_dict = model_zoo.load_url('https://download.pytorch.org/models/resnet18-5c106cde.pth')
+        model.load_state_dict(pre_dict, False)
+        dic = model.state_dict()
+        
+        translator = create_translator()
+        for na in dic:
+            if na[:-6] in translator:
+                name = na[:-6]
+                dic[name + "weight"].copy_(pre_dict[translator[name] + "weight"])
+                dic[name + "bias"] = pre_dict[translator[name] + "bias"]
+
+        model.load_state_dict(dic)
+        
     if pretrained:
         model.load_state_dict(torch.load(pretrained)["state_dict"])
     
@@ -189,7 +218,19 @@ def piggyback_net18(model_classes, pre_imagenet=True, pretrained=None, bn=True, 
 def quantized_net18(model_classes, pre_imagenet=True, pretrained=None, bn=True, fc=True):
     model = MaskedNet(classes=model_classes, layers=[2, 2, 2, 2], fc=fc, quantized=True)
     if pre_imagenet:
-        model.load_state_dict(model_zoo.load_url('https://download.pytorch.org/models/resnet18-5c106cde.pth'), False)
+        pre_dict = model_zoo.load_url('https://download.pytorch.org/models/resnet18-5c106cde.pth')
+        model.load_state_dict(pre_dict, False)
+        dic = model.state_dict()
+    
+        translator = create_translator()
+        for na in dic:
+            if na[:-6] in translator:
+                name = na[:-6]
+                dic[name + "weight"].copy_(pre_dict[translator[name] + "weight"])
+                dic[name + "bias"] = pre_dict[translator[name] + "bias"]
+    
+        model.load_state_dict(dic)
+        
     if pretrained:
         model.load_state_dict(torch.load(pretrained)["state_dict"])
         

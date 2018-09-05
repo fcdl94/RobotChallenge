@@ -4,6 +4,24 @@ import torch.utils.model_zoo as model_zoo
 import math
 
 
+def create_translator():
+    translator = {"bn1." + str(i) + ".": "bn1." for i in range(3)}
+    
+    for j in range(1, 5):
+        for k in range(0, 2):
+            for y in range(1, 3):
+                for i in range(3):
+                    key = "layer" + str(j) + "." + str(k) + ".bn" + str(y) + "."
+                    translator[key + str(i) + "."] = key
+    
+    for j in range(2, 5):
+        for i in range(3):
+            key = "layer" + str(j) + ".0."
+            translator[key + "bn3." + str(i) + "."] = key + "downsample.1."
+    
+    return translator
+
+
 def conv1x1_fonc(in_planes, out_planes=None, stride=1, bias=False):
     if out_planes is None:
         return nn.Conv2d(in_planes, in_planes, kernel_size=1, stride=stride, padding=0, bias=bias)
@@ -24,11 +42,9 @@ class ParallelAdapterModule(nn.Module):
         self.task = index
         for i in range(self.nb_task):
             if i == index:
-                for m in self.conv:
-                    m.weight.requires_grad = True
+                self.conv[i].weight.requires_grad = True
             else:
-                for m in self.conv:
-                    m.weight.requires_grad = False
+                self.conv[i].weight.requires_grad = False
     
     def forward(self, x):
         y = self.conv[self.task](x)
@@ -253,7 +269,19 @@ def rebuffi_net18(model_classes, serie=True, pre_imagenet=True, pretrained=None,
     
     model = RebuffiNet(serie, layers=[2, 2, 2, 2], classes=model_classes, fc=fc)
     if pre_imagenet:
-        model.load_state_dict(model_zoo.load_url('https://download.pytorch.org/models/resnet18-5c106cde.pth'), False)
+        pre_dict = model_zoo.load_url('https://download.pytorch.org/models/resnet18-5c106cde.pth')
+        model.load_state_dict(pre_dict, False)
+        dic = model.state_dict()
+    
+        translator = create_translator()
+        for na in dic:
+            if na[:-6] in translator:
+                name = na[:-6]
+                dic[name + "weight"].copy_(pre_dict[translator[name] + "weight"])
+                dic[name + "bias"] = pre_dict[translator[name] + "bias"]
+    
+        model.load_state_dict(dic)
+        
     if pretrained:
         model.load_state_dict(torch.load(pretrained)["state_dict"])
 

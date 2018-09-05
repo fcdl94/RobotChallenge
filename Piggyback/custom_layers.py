@@ -20,14 +20,15 @@ class MaskedConv2d(nn.modules.conv.Conv2d):
                                       for i in range(0, mask)])
         self.masks = mask
         self.index = 0
+        
+        self.weight.requires_grad = False
+        if self.bias:
+            self.bias.requires_grad = False
         self.reset_mask()
 
     def set_index(self, index):
         if 0 <= index < self.masks:
             self.index = index
-            self.weight.requires_grad = False
-            if self.bias:
-                self.bias.requires_grad = False
             for i, ms in enumerate(self.mask.parameters()):
                 if not i == index:
                     ms.requires_grad = False
@@ -55,6 +56,8 @@ class QuantizedConv2d(nn.modules.conv.Conv2d):
               , groups, bias)
         
         self.weight.requires_grad = False
+        if bias:
+            self.bias.requires_grad = False
         
         self.masks = mask
         self.mask = nn.ParameterList([Parameter(
@@ -85,9 +88,7 @@ class QuantizedConv2d(nn.modules.conv.Conv2d):
     def set_index(self, index):
         if 0 <= index < self.masks:
             self.index = index
-            self.weight.requires_grad = False
-            if self.bias:
-                self.bias.requires_grad = False
+
             for i, ms in enumerate(self.mask.parameters()):
                 if not i == index:
                     ms.requires_grad = False

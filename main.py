@@ -9,7 +9,7 @@ import par_sets as ps
 import Piggyback.networks as pbnet
 import Rebuffi.networks as rbnet
 
-task_list = ["OC", "PE", "SC"]
+task_list = ["OC", "PE", "SC", "TE"]
 folders = {
     "PE": '/home/fabio/robot_challenge/linemod',
     "SC": '/home/fabio/robot_challenge/NYUlab', # '/home/fcdl/Develop/Data/sample',  #
@@ -125,7 +125,7 @@ if __name__ == '__main__':
         # Image folder for train and val
         train_loader = dl.get_image_folder_loaders(folder + "/train", ImageFolder, "SM", batch, rgb, False)
         test_loader = dl.get_image_folder_loaders(folder + "/val", ImageFolder, "NO", batch, rgb, False)
-        index = 2
+        index = 3
     else:
         # never executed, needed only for remove warnings.
         raise(Exception("Error in parameters. Task should be one between " + str(task_list)))
