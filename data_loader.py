@@ -31,7 +31,11 @@ def get_image_folder_loaders(folder, dataset, name, batch=BATCH_SIZE, rgb=True, 
         raise(Exception("rgb and depth are both False"))
     
     # Build the training loader
-    dataset = dataset(root=folder, transform=data_transform, rgb=rgb, depth=depth)
+    try:
+        dataset = dataset(root=folder, transform=data_transform, rgb=rgb, depth=depth)
+    except:
+        dataset = dataset(root=folder, transform=data_transform)
+        
     loader = torch.utils.data.DataLoader(dataset, batch_size=batch, shuffle=True, num_workers=workers)
 
     return loader

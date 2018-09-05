@@ -39,12 +39,9 @@ class MaskedConv2d(nn.modules.conv.Conv2d):
             mask_p.data.fill_(0.01)
 
     def forward(self, x):
-        if self.index == 0:
-            W = self.weight
-        else:
-            binary_mask = self.mask[self.index].clone()
-            binary_mask.data = (binary_mask.data > self.threshold).float()
-            W = binary_mask*self.weight
+        binary_mask = self.mask[self.index].clone()
+        binary_mask.data = (binary_mask.data > self.threshold).float()
+        W = binary_mask*self.weight
         return F.conv2d(x, W, self.bias, self.stride, self.padding, self.dilation, self.groups)
 
 

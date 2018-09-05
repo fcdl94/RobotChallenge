@@ -12,15 +12,17 @@ import Rebuffi.networks as rbnet
 task_list = ["OC", "PE", "SC"]
 folders = {
     "PE": '/home/fabio/robot_challenge/linemod',
-    "SC": '/home/fcdl/Develop/Data/sample',  # '/home/fabio/robot_challenge/NYUlab',
-    "OC": '/home/fabio/robot_challenge/rod/split1'
+    "SC": '/home/fabio/robot_challenge/NYUlab', # '/home/fcdl/Develop/Data/sample',  #
+    "OC": '/home/fabio/robot_challenge/rod/split1',
+    "TE":  '/home/fabio/robot_challenge/imagenet'
 }
 network_list = ["resnet", "piggyback", "quantized", "serial", "parallel"]
 
 classes_list = {
     "OC": 51,
     "PE": 19,
-    "SC": 10
+    "SC": 10,
+    "TE": 1000
 }
 
 if __name__ == '__main__':
@@ -114,6 +116,15 @@ if __name__ == '__main__':
         # Image folder for train and val
         train_loader = dl.get_image_folder_loaders(folder + "/train", NYUDataset, "SM", batch, rgb, depth)
         test_loader = dl.get_image_folder_loaders(folder + "/val", NYUDataset, "NO", batch, rgb, depth)
+        index = 2
+    elif task == "TE":
+        from torchvision.datasets import ImageFolder
+
+        cost_function = nn.CrossEntropyLoss()
+        metric = OBC.ClassificationMetric.ClassificationMetric()
+        # Image folder for train and val
+        train_loader = dl.get_image_folder_loaders(folder + "/train", ImageFolder, "SM", batch, rgb, False)
+        test_loader = dl.get_image_folder_loaders(folder + "/val", ImageFolder, "NO", batch, rgb, False)
         index = 2
     else:
         # never executed, needed only for remove warnings.
