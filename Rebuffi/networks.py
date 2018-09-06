@@ -104,8 +104,9 @@ class BasicRebuffiBlock(nn.Module):
             self.alfa2 = ParallelAdapterModule(planes, planes, nb_tasks=nb_tasks)
         self.bn2 = nn.ModuleList([nn.BatchNorm2d(planes) for i in range(nb_tasks)])
         
-        self.first = first
-        if first:
+        self.first = in_planes != planes
+        if in_planes != planes:
+            # todo put in an alfa4 after conv2d
             self.downsample = nn.Sequential(
                   nn.Conv2d(in_planes, planes, kernel_size=1, stride=stride, bias=False)
             )
@@ -116,7 +117,7 @@ class BasicRebuffiBlock(nn.Module):
         
         self.conv1.weight.requires_grad = False
         self.conv2.weight.requires_grad = False
-        if first:
+        if self.first:
             self.downsample[0].weight.requires_grad = False
     
     def set_index(self, index):

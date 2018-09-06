@@ -140,25 +140,25 @@ if __name__ == '__main__':
         if depth and rgb:
             model = RGBDNet.double_piggyback18(classes_list.values(), index, args.pretrained)
         else:
-            model = pbnet.piggyback_net18(classes_list.values(), args.pretrained)
+            model = pbnet.piggyback_net18(classes_list.values(), pre_imagenet=True, pretrained=args.pretrained)
             model.set_index(index)
     elif args.network == network_list[2]:
         if depth and rgb:
             model = RGBDNet.double_quantized18(classes_list.values(), index, args.pretrained)
         else:
-            model = pbnet.quantized_net18(classes_list.values(), args.pretrained)
+            model = pbnet.quantized_net18(classes_list.values(), pre_imagenet=True, pretrained=args.pretrained)
             model.set_index(index)
     elif args.network == network_list[3]:
         if depth and rgb:
             raise NotImplementedError
         else:
-            model = rbnet.rebuffi_net18(classes_list.values(), pretrained=args.pretrained)
+            model = rbnet.rebuffi_net18(classes_list.values(), pre_imagenet=True, pretrained=args.pretrained)
             model.set_index(index)
     elif args.network == network_list[4]:
         if depth and rgb:
            raise NotImplementedError
         else:
-            model = rbnet.rebuffi_net18(classes_list.values(), serie=False, pretrained=args.pretrained)
+            model = rbnet.rebuffi_net18(classes_list.values(), serie=False, pre_imagenet=True, pretrained=args.pretrained)
             model.set_index(index)
     else:
         raise(Exception("Error in parameters. Network should be one between " + str(network_list)))
@@ -184,8 +184,8 @@ if __name__ == '__main__':
         "step"   : step,
         "decay"  : decay,
         "bs"     : batch,
-        "max_acc": accuracy[0],
-        "end_acc": accuracy[1]
+        "max_acc": "{:.2f}".format(accuracy[0]),
+        "end_acc": "{:.2f}".format(accuracy[1])
     }
     print(str(output))
     out.write(str(output) + "\n")

@@ -22,6 +22,7 @@ def create_translator():
 
     return translator
 
+
 class BasicMaskedBlock(nn.Module):  # Define a residual block
     
     def __init__(self, inplanes, planes, stride=1, classes=1, first=False, quantized=False):
@@ -41,7 +42,8 @@ class BasicMaskedBlock(nn.Module):  # Define a residual block
         self.conv2 = convBlock(planes, planes, kernel_size=3, padding=1, mask=classes)
         self.bn2 = nn.ModuleList([nn.BatchNorm2d(planes) for i in range(classes)])
 
-        if first:
+        self.first = inplanes != planes
+        if inplanes != planes:
             self.downsample = nn.Sequential(
                   convBlock(inplanes, planes, kernel_size=1, stride=stride, mask=classes)
             )
@@ -49,7 +51,6 @@ class BasicMaskedBlock(nn.Module):  # Define a residual block
             self.bn3 = nn.ModuleList([nn.BatchNorm2d(planes) for i in range(classes)])
         
         self.stride = stride
-        self.first = first
         
     def set_index(self, index):
         if 0 <= index < self.classes:
@@ -71,8 +72,7 @@ class BasicMaskedBlock(nn.Module):  # Define a residual block
                     if self.first:
                         self.bn3[i].weight.requires_grad = False
                         self.bn3[i].bias.requires_grad = False
-            
-        
+    
     def forward(self, x):
         if self.first:
             residual = self.downsample(x)
