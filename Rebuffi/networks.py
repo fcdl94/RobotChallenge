@@ -85,7 +85,7 @@ class SerieAdapterModule(nn.Module):
 # No projection: identity shortcut
 class BasicRebuffiBlock(nn.Module):
    
-    def __init__(self, serie, in_planes, planes, stride=1, first=0, nb_tasks=1):
+    def __init__(self, serie, in_planes, planes, stride=1, nb_tasks=1):
         super(BasicRebuffiBlock, self).__init__()
         self.serie = serie
         
@@ -105,8 +105,11 @@ class BasicRebuffiBlock(nn.Module):
         self.bn2 = nn.ModuleList([nn.BatchNorm2d(planes) for i in range(nb_tasks)])
         
         self.first = in_planes != planes
-        if in_planes != planes:
-            # todo put in an alfa4 after conv2d
+        if self.first:
+            if serie:
+                self.alfa3 = SerieAdapterModule(planes, nb_tasks)
+            else:  # is parallel
+                self.alfa3 = ParallelAdapterModule(in_planes, planes, stride, nb_tasks)
             self.downsample = nn.Sequential(
                   nn.Conv2d(in_planes, planes, kernel_size=1, stride=stride, bias=False)
             )
@@ -145,6 +148,10 @@ class BasicRebuffiBlock(nn.Module):
 
         if self.first:
             residual = self.downsample(x)
+            if self.serie:
+                residual = residual + self.alfa3(residual)
+            else:
+                residual = residual + self.alfa3(x)
             residual = self.bn3[self.index](residual)
         else:
             residual = x
@@ -154,18 +161,15 @@ class BasicRebuffiBlock(nn.Module):
             out = out + self.alfa1(out)
         else:
             out = out + self.alfa1(x)
-        
         out = self.bn1[self.index](out)
         out = self.relu(out)
         
-        x = out
+        y = out
         out = self.conv2(out)
-        
         if self.serie:
             out = out + self.alfa2(out)
         else:
-            out = out + self.alfa2(x)
-
+            out = out + self.alfa2(y)
         out = self.bn2[self.index](out)
 
         out += residual
@@ -212,7 +216,7 @@ class RebuffiNet(nn.Module):
         self.conv1.weight.requires_grad = False
     
     def _make_layer(self, planes, nblocks, stride=1, nb_tasks=1):
-        layers = [BasicRebuffiBlock(self.serie, self.in_planes, planes, stride, first=True, nb_tasks=nb_tasks)]
+        layers = [BasicRebuffiBlock(self.serie, self.in_planes, planes, stride=stride, nb_tasks=nb_tasks)]
         self.in_planes = planes
         for i in range(1, nblocks):
             layers.append(BasicRebuffiBlock(self.serie, self.in_planes, planes, nb_tasks=nb_tasks))
@@ -266,7 +270,7 @@ class RebuffiNet(nn.Module):
         return x
 
 
-def rebuffi_net18(model_classes, serie=True, pre_imagenet=True, pretrained=None, bn=True, fc=True):
+def rebuffi_net18(model_classes, serie=True, pre_imagenet=True, pretrained=None, fc=True):
     
     model = RebuffiNet(serie, layers=[2, 2, 2, 2], classes=model_classes, fc=fc)
     if pre_imagenet:
@@ -285,12 +289,6 @@ def rebuffi_net18(model_classes, serie=True, pre_imagenet=True, pretrained=None,
         
     if pretrained:
         model.load_state_dict(torch.load(pretrained)["state_dict"])
-
-    if not bn:
-        for m in model.modules():
-            if isinstance(m, nn.BatchNorm1d) or isinstance(m, nn.BatchNorm2d):
-                m.weight.requires_grad = False
-                m.bias.requires_grad = False
 
     print("Model pretrained loaded")
     return model

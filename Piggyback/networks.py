@@ -186,7 +186,7 @@ class MaskedNet(nn.Module):
         return x
 
 
-def piggyback_net18(model_classes, pre_imagenet=True, pretrained=None, bn=True, fc=True):
+def piggyback_net18(model_classes, pre_imagenet=True, pretrained=None, fc=True):
     model = MaskedNet(classes=model_classes, layers=[2, 2, 2, 2], fc=fc)
     if pre_imagenet:
         pre_dict = model_zoo.load_url('https://download.pytorch.org/models/resnet18-5c106cde.pth')
@@ -204,18 +204,12 @@ def piggyback_net18(model_classes, pre_imagenet=True, pretrained=None, bn=True, 
         
     if pretrained:
         model.load_state_dict(torch.load(pretrained)["state_dict"])
-    
-    if not bn:
-        for m in model.modules():
-            if isinstance(m, nn.BatchNorm1d) or isinstance(m, nn.BatchNorm2d):
-                m.weight.requires_grad = False
-                m.bias.requires_grad = False
-        
+
     print("Model pretrained loaded")
     return model
 
 
-def quantized_net18(model_classes, pre_imagenet=True, pretrained=None, bn=True, fc=True):
+def quantized_net18(model_classes, pre_imagenet=True, pretrained=None, fc=True):
     model = MaskedNet(classes=model_classes, layers=[2, 2, 2, 2], fc=fc, quantized=True)
     if pre_imagenet:
         pre_dict = model_zoo.load_url('https://download.pytorch.org/models/resnet18-5c106cde.pth')
@@ -233,12 +227,6 @@ def quantized_net18(model_classes, pre_imagenet=True, pretrained=None, bn=True, 
         
     if pretrained:
         model.load_state_dict(torch.load(pretrained)["state_dict"])
-        
-    if not bn:
-        for m in model.modules():
-            if isinstance(m, nn.BatchNorm1d) or isinstance(m, nn.BatchNorm2d):
-                m.weight.requires_grad = False
-                m.bias.requires_grad = False
     
     print("Model pretrained loaded")
     return model
