@@ -56,8 +56,9 @@ def quaternion_from_matrix(matrix, row=True):
 
 def geodesic_distance(q1, q2):
     val = torch.abs(torch.bmm(q1.view(q1.size()[0], 1, 4), q2.view(q2.size()[0], 4, 1)))
-    if val > 1.0:
-        val = 1.
+    for i, v in enumerate(val):
+        if v > 1.0:
+            val[i] = 1.0
     d = 2*torch.acos(val)
     return d
 
