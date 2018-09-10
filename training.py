@@ -37,9 +37,9 @@ def train(network, model, train_loader, test_loader, freeze=False, prefix="check
             if "fc" not in name:
                 par.requires_grad = False
     
-    NOT_ADAM = True
+    ADAM = False
     # Set optimizer and scheduler
-    if NOT_ADAM:
+    if not (network == "piggyback" or network == "quantized") or ADAM:
         params_to_optim = list(filter(lambda p: p.requires_grad, model.parameters()))
         # set optimizer and scheduler
         optimizer = optim.SGD(params_to_optim, lr=lr, momentum=momentum, weight_decay=decay)
