@@ -62,10 +62,7 @@ class QuantizedConv2d(nn.modules.conv.Conv2d):
         self.masks = mask
         self.mask = nn.ParameterList([Parameter(
               torch.Tensor(out_channels, in_channels // groups, *self.kernel_size)) for i in range(0, mask)])
-        
-        if bias:
-            self.bias.requires_grad = False
-        
+              
         self.threshold = 0.0
         
         self.bias_mask = nn.ParameterList([Parameter(torch.FloatTensor(1)) for i in range(0, mask)])
