@@ -54,7 +54,7 @@ if __name__ == '__main__':
     parser.add_argument('--set', type=str, default="def",
                         help='The parameter set')
     # SETTING PARAMETERS
-    parser.add_argument('--frozen', type=int, default=0,
+    parser.add_argument('--frozen', type=bool, default=False,
                         help='Whether to use fine tuning (0 - DEF) or feature extractor (1).')
     parser.add_argument('-t', '--task', type=str, default='PE',
                         help='Which is the task to run')

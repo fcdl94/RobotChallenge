@@ -54,7 +54,7 @@ class BasicMaskedBlock(nn.Module):  # Define a residual block
         
     def set_index(self, index):
         if 0 <= index < self.classes:
-            self.index = 0
+            self.index = index
             for i in range(self.classes):
                 if index == i:
                     self.bn1[i].weight.requires_grad = True
