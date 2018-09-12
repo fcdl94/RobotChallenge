@@ -189,9 +189,9 @@ def double_resnet18(classes, pretrained=None):
     return net
 
 
-class RGBDMasknet(nn.Module):
+class RGBDCustomNet(nn.Module):
     def __init__(self, rgb_network, depth_network, features, classes):
-        super(RGBDMasknet, self).__init__()
+        super(RGBDCustomNet, self).__init__()
         self.net1 = rgb_network
         self.net2 = depth_network
         self.fc = nn.ModuleList([nn.Linear(features*2, c) for c in classes])
@@ -232,7 +232,7 @@ def double_piggyback18(classes, index, pretrained=None):
 
     depth_net = piggyback_net18(classes, fc=False)
     
-    net = RGBDMasknet(rgb_net, depth_net, 512, classes)
+    net = RGBDCustomNet(rgb_net, depth_net, 512, classes)
     
     if pretrained:
         net.load_state_dict(torch.load(pretrained)["state_dict"])
@@ -249,7 +249,41 @@ def double_quantized18(classes, index, pretrained=None):
     
     depth_net = quantized_net18(classes, fc=False)
     
-    net = RGBDMasknet(rgb_net, depth_net, 512, classes)
+    net = RGBDCustomNet(rgb_net, depth_net, 512, classes)
+    
+    if pretrained:
+        net.load_state_dict(torch.load(pretrained)["state_dict"])
+    
+    net.set_index(index)
+    
+    return net
+
+
+def double_serial18(classes, index, pretrained=None):
+    from Rebuffi.networks import rebuffi_net18
+    
+    rgb_net = rebuffi_net18(classes, serie=True, pre_imagenet=True, pretrained=pretrained, fc=False)
+    
+    depth_net = rebuffi_net18(classes, serie=True, pre_imagenet=True, pretrained=pretrained, fc=False)
+    
+    net = RGBDCustomNet(rgb_net, depth_net, 512, classes)
+    
+    if pretrained:
+        net.load_state_dict(torch.load(pretrained)["state_dict"])
+    
+    net.set_index(index)
+    
+    return net
+
+
+def double_parallel18(classes, index, pretrained=None):
+    from Rebuffi.networks import rebuffi_net18
+    
+    rgb_net = rebuffi_net18(classes, serie=False, pre_imagenet=True, pretrained=pretrained, fc=False)
+    
+    depth_net = rebuffi_net18(classes, serie=False, pre_imagenet=True, pretrained=pretrained, fc=False)
+    
+    net = RGBDCustomNet(rgb_net, depth_net, 512, classes)
     
     if pretrained:
         net.load_state_dict(torch.load(pretrained)["state_dict"])

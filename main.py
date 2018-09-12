@@ -150,13 +150,13 @@ if __name__ == '__main__':
             model.set_index(index)
     elif args.network == network_list[3]:
         if depth and rgb:
-            raise NotImplementedError
+            model = RGBDNet.double_serial18(classes_list.values(), index, args.pretrained)
         else:
             model = rbnet.rebuffi_net18(classes_list.values(), pre_imagenet=True, pretrained=args.pretrained)
             model.set_index(index)
     elif args.network == network_list[4]:
         if depth and rgb:
-           raise NotImplementedError
+            model = RGBDNet.double_parallel18(classes_list.values(), index, args.pretrained)
         else:
             model = rbnet.rebuffi_net18(classes_list.values(), serie=False, pre_imagenet=True, pretrained=args.pretrained)
             model.set_index(index)
