@@ -165,7 +165,7 @@ if __name__ == '__main__':
     
     if not TEST:
         accuracy = training.train(args.network, model, train_loader, test_loader, prefix=prefix, visdom_env=visdom,
-                                  step=step, batch=batch, epochs=epochs, lr=lr, decay=decay,
+                                  step=step, batch=batch, epochs=epochs, lr=lr, decay=decay, adamlr=adamlr,
                                   freeze=args.frozen, cost_function=cost_function, metric=metric)
     else:
         accuracy = training.test(model, test_loader, cost_function, metric)
