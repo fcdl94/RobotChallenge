@@ -5,7 +5,7 @@ set_dict = {
         "step": 40,
         "decay": 0.00001,
         "bs": 64,
-        "adamlr": 0.0001
+        "adamlr": 0.00001
         },
     "rod": {
         "epochs": 30,
@@ -13,7 +13,7 @@ set_dict = {
         "step": 20,
         "decay": 0.00005,
         "bs": 32,
-        "adamlr": 0.0001
+        "adamlr": 0.00001
     }
 }
 

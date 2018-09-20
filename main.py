@@ -21,8 +21,7 @@ network_list = ["resnet", "piggyback", "quantized", "serial", "parallel"]
 classes_list = {
     "OC": 51,
     "PE": 19,
-    "SC": 10,
-    "TE": 1000
+    "SC": 10
 }
 
 if __name__ == '__main__':
@@ -51,7 +50,7 @@ if __name__ == '__main__':
                         help='The learning rate to apply into training')
     parser.add_argument('--epochs', type=int, default=None,
                         help='How many epochs to use for training')
-    parser.add_argument('--set', type=str, default="def",
+    parser.add_argument('--set', type=str, default="rod",
                         help='The parameter set')
     # SETTING PARAMETERS
     parser.add_argument('--frozen', type=bool, default=False,
@@ -104,7 +103,7 @@ if __name__ == '__main__':
         import PoseEstimation.PELoss as pel
         from PoseEstimation.LinemodDataset import LinemodDataset
         cost_function = pel.PE3DLoss(classes_list["PE"] - 4)
-        metric = pel.PEMetric(classes_list["PE"] - 4)
+        metric = pel.PEMetric(classes_list["PE"] - 4, threshold=20)
         # revert here. train / val not sample
         train_loader = dl.get_image_folder_loaders(folder + "/train", LinemodDataset, "NO", batch, rgb, depth)
         test_loader = dl.get_image_folder_loaders(folder + "/val", LinemodDataset, "NO", batch, rgb, depth)
@@ -117,15 +116,6 @@ if __name__ == '__main__':
         train_loader = dl.get_image_folder_loaders(folder + "/train", NYUDataset, "SM", batch, rgb, depth)
         test_loader = dl.get_image_folder_loaders(folder + "/val", NYUDataset, "NO", batch, rgb, depth)
         index = 2
-    elif task == "TE":
-        from torchvision.datasets import ImageFolder
-
-        cost_function = nn.CrossEntropyLoss()
-        metric = OBC.ClassificationMetric.ClassificationMetric()
-        # Image folder for train and val
-        train_loader = dl.get_image_folder_loaders(folder + "/train", ImageFolder, "SM", batch, rgb, False)
-        test_loader = dl.get_image_folder_loaders(folder + "/val", ImageFolder, "NO", batch, rgb, False)
-        index = 3
     else:
         # never executed, needed only for remove warnings.
         raise(Exception("Error in parameters. Task should be one between " + str(task_list)))
@@ -165,7 +155,7 @@ if __name__ == '__main__':
     
     if not TEST:
         accuracy = training.train(args.network, model, train_loader, test_loader, prefix=prefix, visdom_env=visdom,
-                                  step=step, batch=batch, epochs=epochs, lr=lr, decay=decay, adamlr=adamlr,
+                                  step=step, batch=batch, epochs=epochs, lr=lr, decay=decay, adamlr=adamlr, momentum=0.9,
                                   freeze=args.frozen, cost_function=cost_function, metric=metric)
     else:
         accuracy = training.test(model, test_loader, cost_function, metric)
