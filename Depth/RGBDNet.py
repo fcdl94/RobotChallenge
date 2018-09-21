@@ -198,7 +198,16 @@ class RGBDCustomNet(nn.Module):
         
         self.classes = classes
         self.index = 0
-    
+        
+        self.reset_parameters()
+        
+    def reset_parameters(self):
+        stdv = 0.001
+        for f in self.fc:
+            f.weight.data.uniform_(-stdv, stdv)
+            if f.bias is not None:
+                f.bias.data.uniform_(-stdv, stdv)
+        
     def set_index(self, index):
         self.net1.set_index(index)
         self.net2.set_index(index)
