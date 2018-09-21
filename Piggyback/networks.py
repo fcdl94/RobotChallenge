@@ -188,7 +188,7 @@ class MaskedNet(nn.Module):
 
 def piggyback_net18(model_classes, pre_imagenet=True, pretrained=None, fc=True):
     model = MaskedNet(classes=model_classes, layers=[2, 2, 2, 2], fc=fc)
-    if pre_imagenet:
+    if pre_imagenet and not pretrained:
         pre_dict = model_zoo.load_url('https://download.pytorch.org/models/resnet18-5c106cde.pth')
         model.load_state_dict(pre_dict, False)
         dic = model.state_dict()
@@ -211,7 +211,7 @@ def piggyback_net18(model_classes, pre_imagenet=True, pretrained=None, fc=True):
 
 def quantized_net18(model_classes, pre_imagenet=True, pretrained=None, fc=True):
     model = MaskedNet(classes=model_classes, layers=[2, 2, 2, 2], fc=fc, quantized=True)
-    if pre_imagenet:
+    if pre_imagenet and not pretrained:
         pre_dict = model_zoo.load_url('https://download.pytorch.org/models/resnet18-5c106cde.pth')
         model.load_state_dict(pre_dict, False)
         dic = model.state_dict()

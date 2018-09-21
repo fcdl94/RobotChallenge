@@ -170,6 +170,7 @@ if __name__ == '__main__':
         "rgb"    : rgb,
         "depth"  : depth,
         "epochs" : epochs,
+        "adamlr" : adamlr,
         "lr"     : lr,
         "step"   : step,
         "decay"  : decay,
