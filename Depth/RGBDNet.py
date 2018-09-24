@@ -202,7 +202,7 @@ class RGBDCustomNet(nn.Module):
         self.reset_parameters()
         
     def reset_parameters(self):
-        stdv = 0.00001
+        stdv = 0.0001
         for f in self.fc:
             f.weight.data.uniform_(-stdv, stdv)
             if f.bias is not None:
