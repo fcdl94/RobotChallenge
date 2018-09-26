@@ -60,6 +60,9 @@ def geodesic_distance(q1, q2):
         if v > 1.0:
             val[i] = 1.0
     d = 2*torch.acos(val)
+    for v in d:
+        if math.isnan(v):
+            raise Exception("NaN in geodesic distance!")
     return d
 
 

@@ -4,12 +4,24 @@ import math
 from PoseEstimation.utils import rotation_equals, geodesic_distance
 import torch.nn.functional as f
 
+
+class GeodesicDistance(nn.Module):
+    
+    def __init__(self):
+        super(GeodesicDistance, self).__init__()
+    
+    def forward(self, x, target):
+        """ Input  should be BS x 4 (Quaternion as q = a + bi + cj + dk)
+            Target should be BS x 4 (Quaternion as q = a + bi + cj + dk)
+        """
+        return geodesic_distance(x, target)
+
 class PE3DLoss(nn.Module):
     ''' Module to compute entropy loss '''
     def __init__(self, classes):
         super(PE3DLoss, self).__init__()
         self.CrossEntropyLoss = nn.CrossEntropyLoss()
-        self.GeodesicDistance = GeodesicDistance()  # this is the L2 norm
+        self.geodesicDistance = GeodesicDistance()  # this is the L2 norm
         self.classes = classes
     
     def forward(self, x, target):
@@ -23,7 +35,7 @@ class PE3DLoss(nn.Module):
         rot_input = f.normalize(rot_input, p=2, dim=1)
         
         ce_loss = self.CrossEntropyLoss(class_input, class_target.long())
-        distance = self.GeodesicDistance(rot_input, rot_target)
+        distance = self.geodesicDistance(rot_input, rot_target)
         final_loss = ce_loss + distance.mean()
         return final_loss
 
@@ -61,13 +73,3 @@ class PEMetric(nn.Module):
         return correct.sum(-1)
 
 
-class GeodesicDistance(nn.Module):
-    
-    def __init__(self):
-        super(GeodesicDistance, self).__init__()
-
-    def forward(self, x, target):
-        """ Input  should be BS x 4 (Quaternion as q = a + bi + cj + dk)
-            Target should be BS x 4 (Quaternion as q = a + bi + cj + dk)
-        """
-        return geodesic_distance(x, target)
