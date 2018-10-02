@@ -11,10 +11,9 @@ import Rebuffi.networks as rbnet
 
 task_list = ["OC", "PE", "SC", "TE"]
 folders = {
-    "PE": '/home/fabio/robot_challenge/linemod',
-    "SC": '/home/fabio/robot_challenge/NYUlab', # '/home/fcdl/Develop/Data/sample',  #
-    "OC": '/home/fabio/robot_challenge/rod/split1',
-    "TE":  '/home/fabio/robot_challenge/imagenet'
+    "PE": '/home/fabioc/dataset/linemod',
+    "SC": '/home/fabioc/dataset/NYUlab', # '/home/fcdl/Develop/Data/sample',  #
+    "OC": '/home/fabioc/dataset/rod/split1',
 }
 network_list = ["resnet", "piggyback", "quantized", "serial", "parallel"]
 
@@ -172,9 +171,6 @@ if __name__ == '__main__':
         "epochs" : epochs,
         "adamlr" : adamlr,
         "lr"     : lr,
-        "step"   : step,
-        "decay"  : decay,
-        "bs"     : batch,
         "max_acc": "{:.2f}".format(accuracy[0]),
         "end_acc": "{:.2f}".format(accuracy[1])
     }

@@ -4,7 +4,7 @@ import torch.nn as nn
 import torch.utils.data
 from datetime import datetime
 import numpy as np
-import visdom
+
 from OBC.ClassificationMetric import ClassificationMetric
 from Piggyback.multiple_optim import MultipleOptimizer
 
@@ -15,7 +15,10 @@ NO_CUDA = False
 LOG_INTERVAL = 10
 
 # Initialize visualization tool
-vis = visdom.Visdom()
+VISDOM = False
+if VISDOM:
+    import visdom
+    vis = visdom.Visdom()
 
 # Check for CUDA usage
 cuda = not NO_CUDA and torch.cuda.is_available()
@@ -26,7 +29,8 @@ def train(network, model, train_loader, test_loader, freeze=False, prefix="check
           cost_function=nn.CrossEntropyLoss(), metric=ClassificationMetric()):
     
     # Define visualization environment
-    vis.env = visdom_env
+    if VISDOM:
+        vis.env = visdom_env
     
     global BATCH_SIZE
     BATCH_SIZE = batch
@@ -95,36 +99,38 @@ def train(network, model, train_loader, test_loader, freeze=False, prefix="check
 
         print('Train Epoch: {} \tTrainLoss: {:.6f} \tTestLoss: {:.6f}\tAccuracyTest: {:.6f}'.format(
             epoch, loss_epoch, result[1], result[0]))
+        if VISDOM:
+            # Print results
+            vis.line(
+                X=np.array(iters),
+                Y=np.array(losses_training),
+                opts={
+                    'title': ' Training Loss ',
+                    'xlabel': 'iterations',
+                    'ylabel': 'loss'},
+                name='Training Loss ',
+                win=0)
+            vis.line(
+                X=np.array(iters),
+                Y=np.array(losses_test),
+                opts={
+                    'title': ' Validation Loss ',
+                    'xlabel': 'iterations',
+                    'ylabel': 'loss'},
+                name='Validation Loss ',
+                win=1 )
+            vis.line(
+                X=np.array(iters),
+                Y=np.array(accuracies_test),
+                opts={
+                    'title': ' Accuracy ',
+                    'xlabel': 'iterations',
+                    'ylabel': 'accuracy'},
+                name='Validation Accuracy ',
+                win=2 )
 
-        # Print results
-        vis.line(
-            X=np.array(iters),
-            Y=np.array(losses_training),
-            opts={
-                'title': ' Training Loss ',
-                'xlabel': 'iterations',
-                'ylabel': 'loss'},
-            name='Training Loss ',
-            win=0)
-        vis.line(
-            X=np.array(iters),
-            Y=np.array(losses_test),
-            opts={
-                'title': ' Validation Loss ',
-                'xlabel': 'iterations',
-                'ylabel': 'loss'},
-            name='Validation Loss ',
-            win=1 )
-        vis.line(
-            X=np.array(iters),
-            Y=np.array(accuracies_test),
-            opts={
-                'title': ' Accuracy ',
-                'xlabel': 'iterations',
-                'ylabel': 'accuracy'},
-            name='Validation Accuracy ',
-            win=2 )
 
+       
         if best_accuracy < result[0]:
             best_accuracy = result[0]
 
@@ -137,6 +143,7 @@ def train(network, model, train_loader, test_loader, freeze=False, prefix="check
                 'optimizer': optimizer.state_dict()
             }, "models/" + prefix + ".pth")
 
+    save_results("log/"+prefix+".csv", iters, losses_training, losses_test, accuracies_test)
     return [best_accuracy, result[0]]
 
 
@@ -231,3 +238,11 @@ def test_epoch(model, test_loader, cost_function, metric):
 
     torch.set_grad_enabled(True)
     return results
+
+def save_results(name, iters, t_loss, v_loss, acc):
+    file = open(name, "w")
+    file.write(str(iters)[1:-1] + '\n')
+    file.write(str(t_loss)[1:-1] + '\n')
+    file.write(str(v_loss)[1:-1] + '\n')
+    file.write(str(acc)[1:-1] + '\n')
+    file.close()
