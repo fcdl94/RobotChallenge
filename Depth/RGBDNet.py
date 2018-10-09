@@ -199,7 +199,7 @@ class RGBDCustomNet(nn.Module):
         self.classes = classes
         self.index = 0
         
-        self.reset_parameters()
+        # self.reset_parameters()
         
     def reset_parameters(self):
         stdv = 0.0001

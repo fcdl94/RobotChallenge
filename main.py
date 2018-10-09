@@ -12,7 +12,7 @@ import Rebuffi.networks as rbnet
 task_list = ["OC", "PE", "SC", "TE"]
 folders = {
     "PE": '/home/fabioc/dataset/linemod',
-    "SC": '/home/fabioc/dataset/NYUlab', # '/home/fcdl/Develop/Data/sample',  #
+    "SC": '/home/fabioc/dataset/nyu', # '/home/fcdl/Develop/Data/sample',  #
     "OC": '/home/fabioc/dataset/rod/split1',
 }
 network_list = ["resnet", "piggyback", "quantized", "serial", "parallel"]
