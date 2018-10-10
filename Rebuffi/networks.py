@@ -204,7 +204,7 @@ class RebuffiNet(nn.Module):
             
         for m in self.modules():
             if isinstance(m, nn.Conv2d):
-                m.weight.data.normal_(0, 0.00001)
+                m.weight.data.normal_(0, 0.0001)
             elif isinstance(m, nn.BatchNorm2d):
                 m.weight.data.fill_(1)
                 m.bias.data.zero_()
