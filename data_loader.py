@@ -48,7 +48,7 @@ def get_data_transform(name, rgb):
         MEAN = IMAGENET_MEAN
         STD = [1, 1, 1]
     else:
-        MEAN = [0, 0, 0]
+        MEAN = IMAGENET_MEAN
         STD = [1, 1, 1]
     
     if name == "NO":
