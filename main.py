@@ -8,6 +8,7 @@ import Depth.RGBDNet as RGBDNet
 import par_sets as ps
 import Piggyback.networks as pbnet
 import Rebuffi.networks as rbnet
+import CombinedNet.networks as cbnet
 
 task_list = ["OC", "PE", "SC", "TE"]
 folders = {
@@ -15,7 +16,7 @@ folders = {
     "SC": '/home/fabioc/dataset/nyu', # '/home/fcdl/Develop/Data/sample',  #
     "OC": '/home/fabioc/dataset/rod/split1',
 }
-network_list = ["resnet", "piggyback", "quantized", "serial", "parallel"]
+network_list = ["resnet", "piggyback", "quantized", "serial", "parallel", "combined"]
 
 classes_list = {
     "OC": 51,
@@ -120,34 +121,41 @@ if __name__ == '__main__':
         raise(Exception("Error in parameters. Task should be one between " + str(task_list)))
     
     # basic network (will be changed according to te baseline)
-    if args.network == network_list[0]:
+    if args.network == network_list[0]:  # resnet
         if depth and rgb:
             model = RGBDNet.double_resnet18(classes_list[task])
         else:
             model = OBC.networks.resnet18(classes_list[task], args.pretrained)
-    elif args.network == network_list[1]:
+    elif args.network == network_list[1]:  # piggyback
         if depth and rgb:
             model = RGBDNet.double_piggyback18(classes_list.values(), index, args.pretrained)
         else:
             model = pbnet.piggyback_net18(classes_list.values(), pre_imagenet=True, pretrained=args.pretrained)
             model.set_index(index)
-    elif args.network == network_list[2]:
+    elif args.network == network_list[2]:  # quantized
         if depth and rgb:
             model = RGBDNet.double_quantized18(classes_list.values(), index, args.pretrained)
         else:
             model = pbnet.quantized_net18(classes_list.values(), pre_imagenet=True, pretrained=args.pretrained)
             model.set_index(index)
-    elif args.network == network_list[3]:
+    elif args.network == network_list[3]:  # serial
         if depth and rgb:
             model = RGBDNet.double_serial18(classes_list.values(), index, args.pretrained)
         else:
             model = rbnet.rebuffi_net18(classes_list.values(), pre_imagenet=True, pretrained=args.pretrained)
             model.set_index(index)
-    elif args.network == network_list[4]:
+    elif args.network == network_list[4]:  # parallel
         if depth and rgb:
             model = RGBDNet.double_parallel18(classes_list.values(), index, args.pretrained)
         else:
             model = rbnet.rebuffi_net18(classes_list.values(), serie=False, pre_imagenet=True, pretrained=args.pretrained)
+            model.set_index(index)
+    elif args.network == network_list[5]:  # combined
+        if depth and rgb:
+            raise NotImplementedError
+        else:
+            model = cbnet.combined_net18(classes_list.values(), pre_imagenet=True, pretrained=args.pretrained,
+                                         order=[0, 1, 2])
             model.set_index(index)
     else:
         raise(Exception("Error in parameters. Network should be one between " + str(network_list)))
