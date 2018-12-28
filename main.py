@@ -13,8 +13,9 @@ import CombinedNet.networks as cbnet
 task_list = ["OC", "PE", "SC", "TE"]
 folders = {
     "PE": '/home/fabioc/dataset/linemod',
-    "SC": '/home/fabioc/dataset/nyu', # '/home/fcdl/Develop/Data/sample',  #
+    "SC": '/home/fabioc/dataset/nyu',
     "OC": '/home/fabioc/dataset/rod/split1',
+    "DEBUG": '/home/fcdl/Develop/Data/sample',
 }
 network_list = ["resnet", "piggyback", "quantized", "serial", "parallel", "combined"]
 

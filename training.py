@@ -43,7 +43,7 @@ def train(network, model, train_loader, test_loader, freeze=False, prefix="check
     
     ADAM = False
     # Set optimizer and scheduler
-    if not (network == "piggyback" or network == "quantized") and not ADAM:
+    if not (network == "piggyback" or network == "quantized" or network == "combined") and not ADAM:
         params_to_optim = list(filter(lambda p: p.requires_grad, model.parameters()))
         # set optimizer and scheduler
         optimizer = optim.SGD(params_to_optim, lr=lr, momentum=momentum, weight_decay=decay)

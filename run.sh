@@ -3,7 +3,7 @@ x=1
 
 while [ ${x} -le $5 ]
 do
-python main.py --t $1 --name $1_$3-$4_${x} --set rod -n $2 --rgb $3 --depth $4
+python main.py --t $1 --name $1_$3-$4_${x} --set rod -n $2 --rgb $3 --depth $4 --folder DEBUG
 (( x++ ))
 done
 

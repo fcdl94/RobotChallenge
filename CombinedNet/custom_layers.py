@@ -21,7 +21,7 @@ class CombinedLayers(nn.modules.conv.Conv2d):
                                       for i in range(0, mask)])
 
         # task order[0] is independent from the others, order[1] depends on order[0], order[2] on 0,1 and so on
-        self.alphas = nn.ParameterList([nn.Parameter(torch.eye(mask, require_grad=True)[i]) for i in range(mask)])
+        self.alphas = nn.ParameterList([nn.Parameter(torch.eye(mask, requires_grad=True)[i]) for i in range(mask)])
         for i in range(len(order)):
             for j in range(i+1, len(order)):
                 self.alphas[order[i]][order[j]].require_grad = False
@@ -53,6 +53,6 @@ class CombinedLayers(nn.modules.conv.Conv2d):
         return final_binary_mask
 
     def forward(self, x):
-        binary_mask = self.make_binary_masks()
+        binary_mask = self.make_binary_mask()
         W = binary_mask*self.weight
         return F.conv2d(x, W, self.bias, self.stride, self.padding, self.dilation, self.groups)
