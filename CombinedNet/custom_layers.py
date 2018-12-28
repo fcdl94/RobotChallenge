@@ -20,11 +20,12 @@ class CombinedLayers(nn.modules.conv.Conv2d):
         self.mask = nn.ParameterList([Parameter(torch.Tensor(out_channels, in_channels // groups, *self.kernel_size))
                                       for i in range(0, mask)])
 
+        self.order = order
+        order_inverted = [order.index(i) for i in range(mask)]
+
         # task order[0] is independent from the others, order[1] depends on order[0], order[2] on 0,1 and so on
-        self.alphas = nn.ParameterList([nn.Parameter(torch.eye(mask, requires_grad=True)[i]) for i in range(mask)])
-        for i in range(len(order)):
-            for j in range(i+1, len(order)):
-                self.alphas[order[i]][order[j]].require_grad = False
+        # MUST BE INDEXED ON ORDER!
+        self.alphas = nn.ParameterList([nn.Parameter(torch.zeros(i, requires_grad=True)) for i in order_inverted])
 
         self.weight.requires_grad = False
         if self.bias:
@@ -45,10 +46,11 @@ class CombinedLayers(nn.modules.conv.Conv2d):
                     ms.requires_grad = True
 
     def make_binary_mask(self):
-        final_binary_mask = torch.zeros(self.mask[self.index].shape)
-        for i in range(self.masks):
-            binary_mask = self.mask[i].clone()
-            binary_mask.data = self.alphas[self.index][i]*(binary_mask.data > self.threshold).float()
+        final_binary_mask = self.mask[self.index].clone()
+        final_binary_mask.data = (final_binary_mask.data > self.threshold).float()
+        for i in range(len(self.alphas[self.index])):
+            binary_mask = self.mask[self.order[i]].clone()
+            binary_mask.data = self.alphas[self.index][self.order[i]]*(binary_mask.data > self.threshold).float()
             final_binary_mask = final_binary_mask + binary_mask
         return final_binary_mask
 
