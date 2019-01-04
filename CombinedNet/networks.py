@@ -201,7 +201,10 @@ def combined_net18(model_classes, pre_imagenet=True, pretrained=None, fc=True, o
         model.load_state_dict(dic)
 
     if pretrained:
-        model.load_state_dict(torch.load(pretrained)["state_dict"])
+        if not torch.cuda.is_available():
+            model.load_state_dict(torch.load(pretrained, map_location=lambda storage, loc: storage)["state_dict"])
+        else:
+            model.load_state_dict(torch.load(pretrained)["state_dict"])
 
     print("Model pretrained loaded")
     return model

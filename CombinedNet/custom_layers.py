@@ -30,11 +30,13 @@ class CombinedLayers(nn.modules.conv.Conv2d):
         self.weight.requires_grad = False
         if self.bias:
             self.bias.requires_grad = False
-        self.reset_mask()
+        self.reset()
 
-    def reset_mask(self):
+    def reset(self):
         for mask_p in self.mask:
             mask_p.data.fill_(0.01)
+        for alpha in self.alphas:
+            alpha.data.fill_(0.001)
 
     def set_index(self, index):
         if 0 <= index < self.masks:
@@ -44,13 +46,18 @@ class CombinedLayers(nn.modules.conv.Conv2d):
                     ms.requires_grad = False
                 else:
                     ms.requires_grad = True
+            for i, a in enumerate(self.alphas.parameters()):
+                if not i == index:
+                    a.requires_grad = False
+                else:
+                    a.requires_grad = True
 
     def make_binary_mask(self):
         final_binary_mask = self.mask[self.index].clone()
         final_binary_mask.data = (final_binary_mask.data > self.threshold).float()
         for i in range(len(self.alphas[self.index])):
             binary_mask = self.mask[self.order[i]].clone()
-            binary_mask.data = self.alphas[self.index][self.order[i]]*(binary_mask.data > self.threshold).float()
+            binary_mask.data = self.alphas[self.index][i]*(binary_mask.data > self.threshold).float()
             final_binary_mask = final_binary_mask + binary_mask
         return final_binary_mask
 

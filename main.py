@@ -156,7 +156,7 @@ if __name__ == '__main__':
             raise NotImplementedError
         else:
             model = cbnet.combined_net18(classes_list.values(), pre_imagenet=True, pretrained=args.pretrained,
-                                         order=[0, 1, 2])
+                                         order=[2, 1, 0])
             model.set_index(index)
     else:
         raise(Exception("Error in parameters. Network should be one between " + str(network_list)))

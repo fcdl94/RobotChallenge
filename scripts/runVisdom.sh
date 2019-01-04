@@ -1,4 +1,4 @@
 #!/bin/bash
-source activate MultiDomainLearning
-echo "connect to http://130.192.163.192:8097/"
-python -m visdom.server
+python -m visdom.server > vis.log 2> vis.err &
+sleep 5
+python vis.py
