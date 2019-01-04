@@ -23,7 +23,7 @@ if __name__ == "__main__":
         # scenes.txt that is a list containing the scene pf the image (ordered)
         # train.txt that is the list of training samples (as number)
     parser = argparse.ArgumentParser(description='Script to split NYU')
-    parser.add_argument('--path', type=str, default="/home/fabio/robot_challenge/NYUlab",
+    parser.add_argument('--path', type=str, default="/home/fabioc/dataset/nyu",
                         help="The input folder")
     
     args = parser.parse_args()

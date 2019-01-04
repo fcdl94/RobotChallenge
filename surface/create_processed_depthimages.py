@@ -98,10 +98,10 @@ keywords_color = {
     "sample": "jpg"
 }
 
-BASE_ = "/home/fcdl/Develop/Data/RGBDTC/"
+BASE_ = "/home/fabioc/dataset/"
 path = {
-    "ROD": BASE_ + "ROD/",
-    "NYU": BASE_ + "NYU/",
+    "ROD": BASE_ + "rod/",
+    "NYU": BASE_ + "nyu/",
     "linemod": BASE_ + "linemod/",
     "sample": BASE_ + "sample/"
 }
