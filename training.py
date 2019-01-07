@@ -28,11 +28,11 @@ cuda = not NO_CUDA and torch.cuda.is_available()
 def train(network, model, train_loader, test_loader, freeze=False, prefix="checkpoint", visdom_env="robotROD",
           epochs=EPOCHS, step=STEP, lr=0.001, momentum=0.9, decay=10e-5, batch=32, adamlr=0.0001,
           cost_function=nn.CrossEntropyLoss(), metric=ClassificationMetric()):
-    
+
     # Define visualization environment
     if VISDOM:
         vis.env = visdom_env
-    
+
     global BATCH_SIZE
     BATCH_SIZE = batch
 
@@ -41,7 +41,7 @@ def train(network, model, train_loader, test_loader, freeze=False, prefix="check
         for name, par in model.named_parameters():
             if "fc" not in name:
                 par.requires_grad = False
-    
+
     ADAM = False
     # Set optimizer and scheduler
     if not (network == "piggyback" or network == "quantized" or network == "combined") and not ADAM:
@@ -66,24 +66,15 @@ def train(network, model, train_loader, test_loader, freeze=False, prefix="check
             scheduler_b = optim.lr_scheduler.StepLR(optimizer_b, step)
             scheduler = MultipleOptimizer(scheduler_a, scheduler_b)
             optimizer = MultipleOptimizer(optimizer_a, optimizer_b)
-    
+
     # Consider this as a sanity check
     for name, par in model.named_parameters():
         if par.requires_grad:
             print(name + " requires_grad: " + str(par.requires_grad))
-        
+
     # prepare for training
     if cuda:
         model = model.cuda()
-
-    for name, mod in model.named_modules():
-        if isinstance(mod, CombinedNet.custom_layers.CombinedLayers):
-            if torch.sum(mod.alphas[0]) > 0 or torch.sum(mod.alphas[1]) > 0:
-                print("MOD {}".format(name))
-                for i in range(3):
-                    print("\tINDEX: {} {}".format(i, mod.alphas[i]))
-                print()
-
 
     # Initialize the lists needed for visualization, plus window offset for the graphs
     iters = []
@@ -97,7 +88,7 @@ def train(network, model, train_loader, test_loader, freeze=False, prefix="check
     for epoch in range(1, epochs + 1):
 
         scheduler.step()
-    
+
         # NOTE: loss function is a parameter as well as the metric function
         loss_epoch = train_epoch(model, epoch, train_loader, optimizer, cost_function)
         result = test_epoch(model, test_loader, cost_function, metric)
@@ -106,14 +97,6 @@ def train(network, model, train_loader, test_loader, freeze=False, prefix="check
         losses_test.append(result[1])
         losses_training.append(loss_epoch)
         iters.append(epoch)
-
-        for name, mod in model.named_modules():
-            if isinstance(mod, CombinedNet.custom_layers.CombinedLayers):
-                if torch.sum(mod.alphas[0]) > 0 or torch.sum(mod.alphas[1]) > 0:
-                    print("MOD {}".format(name))
-                    for i in range(3):
-                        print("\tINDEX: {} {}".format(i, mod.alphas[i]))
-                    print()
 
         print('Train Epoch: {} \tTrainLoss: {:.6f} \tTestLoss: {:.6f}\tAccuracyTest: {:.6f}'.format(
             epoch, loss_epoch, result[1], result[0]))
@@ -148,7 +131,7 @@ def train(network, model, train_loader, test_loader, freeze=False, prefix="check
                 win=2 )
 
 
-       
+
         if best_accuracy < result[0]:
             best_accuracy = result[0]
 

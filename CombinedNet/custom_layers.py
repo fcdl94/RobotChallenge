@@ -25,7 +25,7 @@ class CombinedLayers(nn.modules.conv.Conv2d):
 
         # task order[0] is independent from the others, order[1] depends on order[0], order[2] on 0,1 and so on
         # MUST BE INDEXED ON ORDER!
-        self.alphas = nn.ParameterList([nn.Parameter(torch.zeros(i, requires_grad=True)) for i in order_inverted])
+        self.alphas = nn.ParameterList([nn.Parameter(torch.zeros((i,1), requires_grad=True)) for i in order_inverted])
 
         self.weight.requires_grad = False
         if self.bias:
@@ -53,12 +53,14 @@ class CombinedLayers(nn.modules.conv.Conv2d):
                     a.requires_grad = True
 
     def make_binary_mask(self):
-        final_binary_mask = self.mask[self.index].clone()
-        final_binary_mask.data = (final_binary_mask.data > self.threshold).float()
+
+        final_binary_mask = (self.mask[self.index].clone().data > self.threshold).float()
         for i in range(len(self.alphas[self.index])):
             binary_mask = self.mask[self.order[i]].clone()
-            binary_mask.data = self.alphas[self.index][i]*(binary_mask.data > self.threshold).float()
-            final_binary_mask = final_binary_mask + binary_mask
+            binary_mask.data = (binary_mask.data > self.threshold).float()
+            final_binary_mask += self.alphas[self.index][i] * binary_mask
+
+        print(self.alphas[self.index])
         return final_binary_mask
 
     def forward(self, x):
