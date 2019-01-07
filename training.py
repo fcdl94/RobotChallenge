@@ -7,6 +7,7 @@ import numpy as np
 
 from OBC.ClassificationMetric import ClassificationMetric
 from Piggyback.multiple_optim import MultipleOptimizer
+import CombinedNet.custom_layers
 
 # Training settings
 EPOCHS = 60
@@ -75,6 +76,15 @@ def train(network, model, train_loader, test_loader, freeze=False, prefix="check
     if cuda:
         model = model.cuda()
 
+    for name, mod in model.named_modules():
+        if isinstance(mod, CombinedNet.custom_layers.CombinedLayers):
+            if torch.sum(mod.alphas[0]) > 0 or torch.sum(mod.alphas[1]) > 0:
+                print("MOD {}".format(name))
+                for i in range(3):
+                    print("\tINDEX: {} {}".format(i, mod.alphas[i]))
+                print()
+
+
     # Initialize the lists needed for visualization, plus window offset for the graphs
     iters = []
     losses_training = []
@@ -96,6 +106,14 @@ def train(network, model, train_loader, test_loader, freeze=False, prefix="check
         losses_test.append(result[1])
         losses_training.append(loss_epoch)
         iters.append(epoch)
+
+        for name, mod in model.named_modules():
+            if isinstance(mod, CombinedNet.custom_layers.CombinedLayers):
+                if torch.sum(mod.alphas[0]) > 0 or torch.sum(mod.alphas[1]) > 0:
+                    print("MOD {}".format(name))
+                    for i in range(3):
+                        print("\tINDEX: {} {}".format(i, mod.alphas[i]))
+                    print()
 
         print('Train Epoch: {} \tTrainLoss: {:.6f} \tTestLoss: {:.6f}\tAccuracyTest: {:.6f}'.format(
             epoch, loss_epoch, result[1], result[0]))
