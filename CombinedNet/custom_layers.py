@@ -54,13 +54,13 @@ class CombinedLayers(nn.modules.conv.Conv2d):
 
     def make_binary_mask(self):
 
-        final_binary_mask = (self.mask[self.index].clone().data > self.threshold).float()
+        final_binary_mask = self.mask[self.index].clone()
+        final_binary_mask.data = (final_binary_mask.data > self.threshold).float()
         for i in range(len(self.alphas[self.index])):
             binary_mask = self.mask[self.order[i]].clone()
             binary_mask.data = (binary_mask.data > self.threshold).float()
             final_binary_mask += self.alphas[self.index][i] * binary_mask
 
-        print(self.alphas[self.index])
         return final_binary_mask
 
     def forward(self, x):

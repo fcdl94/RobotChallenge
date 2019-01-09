@@ -6,6 +6,7 @@ import data_loader as dl
 import OBC.ClassificationMetric
 import Depth.RGBDNet as RGBDNet
 import par_sets as ps
+from datetime import date
 import Piggyback.networks as pbnet
 import Rebuffi.networks as rbnet
 import CombinedNet.networks as cbnet
@@ -172,6 +173,7 @@ if __name__ == '__main__':
     
     out = open("RESULTS.txt", "a")
     output = {
+        "date"   : date.today(),
         "name"   : visdom,
         "task"   : args.task,
         "net"    : args.network,
