@@ -15,7 +15,7 @@ task_list = ["OC", "PE", "SC", "TE"]
 folders = {
     "PE": '/home/fabioc/dataset/linemod',
     "SC": '/home/fabioc/dataset/nyu',
-    "OC": '/home/fabioc/dataset/rod/split1',
+    "OC": '/home/fabioc/dataset/rod',
     "DEBUG": '/home/fcdl/Develop/Data/sample',
 }
 network_list = ["resnet", "piggyback", "quantized", "serial", "parallel", "combined"]
@@ -173,7 +173,7 @@ if __name__ == '__main__':
     
     out = open("RESULTS.txt", "a")
     output = {
-        "date"   : date.today(),
+        "date"   : str(date.today()),
         "name"   : visdom,
         "task"   : args.task,
         "net"    : args.network,

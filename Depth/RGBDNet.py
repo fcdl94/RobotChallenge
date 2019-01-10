@@ -300,3 +300,20 @@ def double_parallel18(classes, index, pretrained=None):
     net.set_index(index)
     
     return net
+
+
+def double_combined18(classes, index, order, pretrained=None):
+    from CombinedNet.networks import combined_net18
+
+    rgb_net = combined_net18(classes, pre_imagenet=True, pretrained=pretrained, fc=False, order=order)
+
+    depth_net = combined_net18(classes, pre_imagenet=True, pretrained=pretrained, fc=False, order=order)
+
+    net = RGBDCustomNet(rgb_net, depth_net, 512, classes)
+
+    if pretrained:
+        net.load_state_dict(torch.load(pretrained)["state_dict"])
+
+    net.set_index(index)
+
+    return net

@@ -193,8 +193,6 @@ def train_epoch(model, epoch, train_loader, optimizers, cost_function):
         loss = cost_function(output, target)
         loss.backward()
 
-        print(model.conv1.alphas[1].grad)
-
         # Update parameters
         optimizers.step()
 
