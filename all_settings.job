@@ -5,6 +5,14 @@
 #SBATCH --mem=4GB
 #SBATCH --time=24:00:00
 
+# clean the module environment that we may have inherited from the calling session
+ml purge
+
+# load the relevant modules
+ml PyTorch
+ml torchvision
+
+#run the scripts
 t=1
 
 while [ ${t} -le $3 ]
