@@ -1,0 +1,17 @@
+#!/bin/bash
+#SBATCH --job-name=RGBDTC
+#SBATCH --gres=gpu:1
+#SBATCH --cpus-per-task=1
+#SBATCH --mem=4GB
+#SBATCH --time=24:00:00
+
+t=1
+
+while [ ${t} -le $5 ]
+do
+python main.py -t $1 -n $2 --name $1_$2_$3-$4_${t} --rgb $3 --depth $4 ${@:6}
+(( t++ ))
+done
+
+# example: ./run.sh SC piggyback 1 0 3 -> run SC on piggyback three times with only RGB
+# example: ./run.sh PE resnet 0 1 1 -> run PE on resnet one time with only Dpt
