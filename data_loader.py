@@ -46,10 +46,10 @@ def get_data_transform(name, rgb):
     # Create Data loader w.r.t. chosen transformations
     if rgb:
         MEAN = IMAGENET_MEAN
-        STD = [1, 1, 1]
+        STD = IMAGENET_STD
     else:
         MEAN = IMAGENET_MEAN
-        STD = [1, 1, 1]
+        STD = IMAGENET_STD
     
     if name == "NO":
         data_transform = transforms.Compose([

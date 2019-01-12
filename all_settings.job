@@ -18,7 +18,7 @@ t=1
 while [ ${t} -le $3 ]
 do
 python main.py -t $1 -n $2 --name $1_$2_1-0_${t} --rgb 1 --depth 0 ${@:4}
-python main.py -t $1 -n $2 --name $1_$2_0-0_${t} --rgb 0 --depth 1 ${@:4}
+python main.py -t $1 -n $2 --name $1_$2_0-1_${t} --rgb 0 --depth 1 ${@:4}
 python main.py -t $1 -n $2 --name $1_$2_1-1_${t} --rgb 1 --depth 1 ${@:4}
 (( t++ ))
 done

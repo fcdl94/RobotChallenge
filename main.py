@@ -26,6 +26,14 @@ classes_list = {
     "SC": 10
 }
 
+
+def parse_order(order):
+    order = str(order)
+    if len(order) == 2:
+        order = '0' + order
+    return [int(i) for i in order]
+
+
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Masked model for VDA challenge')
     # NAMING-PARAMETERS
@@ -64,6 +72,8 @@ if __name__ == '__main__':
     parser.add_argument("--depth", type=int, default=0,
                         help="if this is true, depth will be used.")
     parser.add_argument("--rgb", type=int, default=1,
+                        help="if this is true, rgb will be used.")
+    parser.add_argument("--rgb", type=int, default=12,
                         help="if this is true, rgb will be used.")
 
     args = parser.parse_args()
@@ -153,11 +163,12 @@ if __name__ == '__main__':
             model = rbnet.rebuffi_net18(classes_list.values(), serie=False, pre_imagenet=True, pretrained=args.pretrained)
             model.set_index(index)
     elif args.network == network_list[5]:  # combined
+        order = parse_order(args.order)
         if depth and rgb:
-            raise NotImplementedError
+            model = RGBDNet.double_combined18(classes_list.values(), index, order, args.pretrained)
         else:
             model = cbnet.combined_net18(classes_list.values(), pre_imagenet=True, pretrained=args.pretrained,
-                                         order=[2, 1, 0])
+                                         order=order)
             model.set_index(index)
     else:
         raise(Exception("Error in parameters. Network should be one between " + str(network_list)))
