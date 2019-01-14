@@ -271,9 +271,9 @@ def double_quantized18(classes, index, pretrained=None):
 def double_serial18(classes, index, pretrained=None):
     from Rebuffi.networks import rebuffi_net18
     
-    rgb_net = rebuffi_net18(classes, serie=True, pre_imagenet=True, pretrained=pretrained, fc=False)
+    rgb_net = rebuffi_net18(classes, serie=True, pre_imagenet=True, fc=False)
     
-    depth_net = rebuffi_net18(classes, serie=True, pre_imagenet=True, pretrained=pretrained, fc=False)
+    depth_net = rebuffi_net18(classes, serie=True, pre_imagenet=True,  fc=False)
     
     net = RGBDCustomNet(rgb_net, depth_net, 512, classes)
     
@@ -288,9 +288,9 @@ def double_serial18(classes, index, pretrained=None):
 def double_parallel18(classes, index, pretrained=None):
     from Rebuffi.networks import rebuffi_net18
     
-    rgb_net = rebuffi_net18(classes, serie=False, pre_imagenet=True, pretrained=pretrained, fc=False)
+    rgb_net = rebuffi_net18(classes, serie=False, pre_imagenet=True, fc=False)
     
-    depth_net = rebuffi_net18(classes, serie=False, pre_imagenet=True, pretrained=pretrained, fc=False)
+    depth_net = rebuffi_net18(classes, serie=False, pre_imagenet=True, fc=False)
     
     net = RGBDCustomNet(rgb_net, depth_net, 512, classes)
     
@@ -305,9 +305,9 @@ def double_parallel18(classes, index, pretrained=None):
 def double_combined18(classes, index, order, pretrained=None):
     from CombinedNet.networks import combined_net18
 
-    rgb_net = combined_net18(classes, pre_imagenet=True, pretrained=pretrained, fc=False, order=order)
+    rgb_net = combined_net18(classes, pre_imagenet=True, fc=False, order=order)
 
-    depth_net = combined_net18(classes, pre_imagenet=True, pretrained=pretrained, fc=False, order=order)
+    depth_net = combined_net18(classes, pre_imagenet=True, fc=False, order=order)
 
     net = RGBDCustomNet(rgb_net, depth_net, 512, classes)
 
