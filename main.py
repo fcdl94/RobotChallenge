@@ -73,7 +73,7 @@ if __name__ == '__main__':
                         help="if this is true, depth will be used.")
     parser.add_argument("--rgb", type=int, default=1,
                         help="if this is true, rgb will be used.")
-    parser.add_argument("--rgb", type=int, default=12,
+    parser.add_argument("--order", type=int, default=12,
                         help="if this is true, rgb will be used.")
 
     args = parser.parse_args()
