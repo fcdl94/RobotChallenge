@@ -41,8 +41,8 @@ def normalize(depthImg):
     return out
 
 
-def resize(image):
-    image = cv2.resize(image, IMSIZE, interpolation=cv2.INTER_CUBIC)
+def resize(image, imsize=IMSIZE):
+    image = cv2.resize(image, imsize, interpolation=cv2.INTER_CUBIC)
     return image
 
 

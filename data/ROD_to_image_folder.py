@@ -2,24 +2,16 @@ import os
 import argparse
 from shutil import copyfile
 
-if __name__ == '__main__':
-    parser = argparse.ArgumentParser(description='Script to transform ROD into Image Folder')
-    parser.add_argument('--path', type=str, default="/home/fabioc/dataset/rod",
-                        help="The input folder")
-    parser.add_argument('--index', type=int, default=1,
-                        help="The input split to be made")
 
-    args = parser.parse_args()
-    path = args.path
-
-    ids_file = open("rod_split" + str(args.index), "r")
+def split_rod(path, index=1, base='original'):
+    ids_file = open(path + "/rod_split" + str(index), "r")
     map_ids = []
     for line in ids_file:
         map_ids.append(line.strip())
         print(line.strip())
 
-    source_path = path + "/original"
-    dest_path = path + "/split_d" + str(args.index)
+    source_path = os.path.join(path, base)
+    dest_path = path + "/split_nc_" + str(index)
     if not os.path.exists(dest_path):
         os.mkdir(dest_path)
         os.mkdir(dest_path + "/val")
@@ -46,3 +38,17 @@ if __name__ == '__main__':
                 for image in os.listdir(src):
                     if "crop" in image and "mask" not in image:
                         copyfile(src+"/"+image, dest+"/"+image)
+
+
+if __name__ == '__main__':
+    parser = argparse.ArgumentParser(description='Script to transform ROD into Image Folder')
+    parser.add_argument('--path', type=str, default="/home/fabioc/dataset/rod",
+                        help="The input folder")
+    parser.add_argument('--index', type=int, default=1,
+                        help="The input split to be made")
+
+    args = parser.parse_args()
+    path = args.path
+    split_rod(path, args.index)
+
+

@@ -4,7 +4,7 @@ import cv2
 import os
 import re
 import operator
-import preprocess
+import surface.preprocess as preprocess
 import copy
 from multiprocessing import Pool
 from argparse import ArgumentParser
@@ -22,17 +22,17 @@ def get_arguments():
 def process_colorimage(tu):
     dataset, f = tu
     # print( dataset + f)
-    img = cv2.imread(dataset + str(f), cv2.IMREAD_UNCHANGED)
+    img = cv2.imread(dataset + "/" + str(f), cv2.IMREAD_UNCHANGED)
     surf = copy.copy(img)
-    surf = preprocess.resize(surf)
+    surf = preprocess.resize(surf, (100, 100))
 
-    cv2.imwrite(dataset + f, surf)
+    cv2.imwrite(dataset + "/" + f, surf)
 
 
 def process_depthimage(tu):
     dataset, f = tu
     # print( dataset + f)
-    img = cv2.imread(dataset + str(f), cv2.IMREAD_UNCHANGED)
+    img = cv2.imread(dataset + "/" + str(f), cv2.IMREAD_UNCHANGED)
     if img is None:
         print("!!!!!!!!!!!!!!!!!!!!ERROR \t" + dataset + f + " \t!!!!!!!!!!!!!")
         return
@@ -77,69 +77,70 @@ def process_depthimage(tu):
     surf = preprocess.normalize(surf)
     
     # surf = preprocess.scale(surf)
-    surf = preprocess.resize(surf)
+    surf = preprocess.resize(surf, (100, 100))
     
-    cv2.imwrite(dataset + f, surf)
+    cv2.imwrite(dataset + "/" + f, surf)
 
 
-args = get_arguments()
+def preprocess_folder(dataset, keyword_depth, keyword_color, DEPTH):
+    depth = []
+    color = []
 
-keywords_depth = {
-    "ROD": "depth",
-    "NYU": "png",
-    "linemod": "depth",
-    "sample": "png"
-}
+    print("Starting to pre-process images")
+    sys.stdout.flush()
 
-keywords_color = {
-    "ROD": "_crop",
-    "NYU": "jpg",
-    "linemod": "color",
-    "sample": "jpg"
-}
+    for prefix in ["train/", "val/"]:
 
-BASE_ = "/home/fabioc/dataset/"
-path = {
-    "ROD": BASE_ + "rod/",
-    "NYU": BASE_ + "nyu/",
-    "linemod": BASE_ + "linemod/",
-    "sample": BASE_ + "sample/"
-}
+        classes = os.listdir(os.path.join(dataset + prefix))
+        for c in classes:
+            base = dataset + prefix + c
+            files = os.listdir(base)
+            for f in files:
+                if keyword_depth in f:
+                    depth.append((base, f))
+                elif keyword_color in f:
+                    color.append((base, f))
 
-# Dataset
-dataset = path[args.dataset]
-    
-keyword_depth = keywords_depth[args.dataset]
-keyword_color = keywords_color[args.dataset]
-
-depth = []
-color = []
-
-print("Starting to pre-process images")
-sys.stdout.flush()
-
-for prefix in ["train/", "val/"]:
-    
-    classes = os.listdir(dataset + prefix)
-    for c in classes:
-        base = dataset + prefix + c + "/"
-        files = os.listdir(base)
-        for f in files:
-            if keyword_depth in f:
-                depth.append((base, f))
-            elif keyword_color in f:
-                color.append((base, f))
-
-DEPTH = args.depth
-if DEPTH:
-    print("Starting with depth images....")
-    pool = Pool()
-    pool.map(process_depthimage, depth)
-    print("..." + str(len(depth)) + " depth images processed")
-else:
-    print("Starting with color images....")
-    pool = Pool()
-    pool.map(process_colorimage, color)
-    print("..." + str(len(color)) + " color images processed")
+    if DEPTH:
+        print("Starting with depth images....")
+        pool = Pool()
+        pool.map(process_depthimage, depth)
+        print("..." + str(len(depth)) + " depth images processed")
+    else:
+        print("Starting with color images....")
+        pool = Pool()
+        pool.map(process_colorimage, color)
+        print("..." + str(len(color)) + " color images processed")
 
 
+if __name__ == '__main__':
+    args = get_arguments()
+
+    keywords_depth = {
+        "ROD": "depth",
+        "NYU": "png",
+        "linemod": "depth",
+        "sample": "png"
+    }
+
+    keywords_color = {
+        "ROD": "_crop",
+        "NYU": "jpg",
+        "linemod": "color",
+        "sample": "jpg"
+    }
+
+    BASE_ = "/home/fabioc/dataset/"
+    path = {
+        "ROD": BASE_ + "rod/",
+        "NYU": BASE_ + "nyu/",
+        "linemod": BASE_ + "linemod/",
+        "sample": BASE_ + "sample/"
+    }
+
+    # Dataset
+    dataset = path[args.dataset]
+
+    keyword_depth = keywords_depth[args.dataset]
+    keyword_color = keywords_color[args.dataset]
+    preprocess_folder(dataset, keyword_depth, keyword_color, args.depth)
