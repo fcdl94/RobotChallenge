@@ -51,7 +51,8 @@ if __name__ == '__main__':
     parser.add_argument('--lr', type=float, default=None,
                         help='The learning rate to apply into training')
     parser.add_argument('--adamlr', type=float, default=None,
-                        help='The ADAM learning rate to apply into training if piggyback')
+                        help='The ADAM learning rate to apply into training if piggyback on OC '
+                             '(it is multiplied by 5 in PE, by 10 in SC')
     parser.add_argument('--decay', type=float, default=None,
                         help='The learning rate to apply into training')
     parser.add_argument('--bs', type=int, default=None,
@@ -94,7 +95,8 @@ if __name__ == '__main__':
     
     depth = args.depth
     rgb = args.rgb
-    
+
+    # PLEASE READ THIS. ADAM is multipled by 5 in PE and by 10 in SC (given experiments, it's the best way)
     par_set = ps.get_parameter_set(args.set)
     step = args.step if args.step else par_set["step"]
     batch = args.bs if args.bs else par_set["bs"]
@@ -120,6 +122,7 @@ if __name__ == '__main__':
         train_loader = dl.get_image_folder_loaders(folder + "/train", LinemodDataset, "NO", batch, rgb, depth)
         test_loader = dl.get_image_folder_loaders(folder + "/val", LinemodDataset, "NO", batch, rgb, depth)
         index = 1
+        adamlr *= 5
     elif task == "SC":
         from Depth.NYUDataset import NYUDataset
         cost_function = nn.CrossEntropyLoss()
@@ -128,6 +131,7 @@ if __name__ == '__main__':
         train_loader = dl.get_image_folder_loaders(folder + "/train", NYUDataset, "SM", batch, rgb, depth)
         test_loader = dl.get_image_folder_loaders(folder + "/val", NYUDataset, "NO", batch, rgb, depth)
         index = 2
+        adamlr *= 10
     else:
         # never executed, needed only for remove warnings.
         raise(Exception("Error in parameters. Task should be one between " + str(task_list)))
