@@ -9,7 +9,7 @@ from multiprocessing import Pool
 import data.ROD_to_image_folder as tif
 
 
-BASE_FOLDER = "/home/fcdl/Develop/Data/ROD"
+BASE_FOLDER = "/home/fabioc/dataset/rod"
 SRC_FOLDER = os.path.join(BASE_FOLDER, "full")
 
 DEST_FOLDER = os.path.join(BASE_FOLDER, "proc")
@@ -57,9 +57,14 @@ def apply_surface(depth, rgb, mask):
     pool3 = Pool()
     pool3.map(srf.process_colorimage, mask)
 
-
 def apply_cropping_masks(path):
-    img_path, mask_path = path
+    img_path = path
+
+    ff = img_path[1].split("_")
+    ff[4] = "maskcrop.png"
+
+    mask_path = [img_path[0], "_".join(ff)]
+
     img_path = os.path.join(img_path[0], img_path[1])
     mask_path = os.path.join(mask_path[0], mask_path[1])
 
@@ -71,22 +76,21 @@ def apply_cropping_masks(path):
 
     cv2.imwrite(img_path, nimg)
 
-
 if __name__ == "__main__":
-    MASK = True
+    MASK = False 
     # subsample
     print("Subsampling the data")
-    depth, rgb, mask = sub_sampling()
+    # depth, rgb, mask = sub_sampling()
     print("Applying surface")
     # apply surface
-    apply_surface(depth, rgb, mask)
+    # apply_surface(depth, rgb, mask)
     # apply cropping masks (are we sure?)
     print("Applying the masking to images")
     if MASK:
         pool = Pool()
-        pool.map(apply_cropping_masks, zip(rgb, mask))
+        pool.map(apply_cropping_masks, rgb)
         pool2 = Pool()
-        pool2.map(apply_cropping_masks, zip(depth, mask))
+        pool2.map(apply_cropping_masks, depth)
 
     print("divinding in test and train")
     # divide in train and test
