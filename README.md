@@ -1,16 +1,12 @@
 # RobotChallenge
 
-This code allows to perform a sample training on [RGB-D Object Database](https://rgbd-dataset.cs.washington.edu/dataset.html)
+This code has been released for the RGBD Triathlon benchmark.
 
 ## ROD_to_image_folder.py
 It's a script to adapt the database format to be loaded by PyTorch ImageFolder Dataset class.
 
 ## main.py
-It's the script to run the toy example. There are a lot of parameters but the only useful are:
-* frozen (if perform feature extraction or finetuning)
-* epochs (number of epochs)
-* visdom environment (the name of the env)#
-* test (you can choose whether to perform a test or to perform also the training)
+It's the script to run the toy example. You can start from here to add your method or evaluate methods.
 
 ## training.py
 It's the code to perform the training.
